@@ -1,0 +1,16 @@
+{
+  "name": "wechat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "gewechaty": "^0.0.19",
+    "querystring": "^0.2.1",
+    "ws": "^8.18.0"
+  }
+}

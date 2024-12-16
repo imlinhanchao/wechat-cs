@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "./server"
+		},
+		{
+			"path": "./extension"
+		},
+    {
+			"path": "./extension/webview"
+		}
+	],
+  "settings": {
+    "typescript.tsc.autoDetect": "off",
+		"typescript.tsdk": "./extension/webview/node_modules/typescript/lib"
+  }
+}
