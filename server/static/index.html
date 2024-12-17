@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wechat Status</title>
+  <script src="./qr.js"></script>
+  <style>
+    .wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    button {
+      background: #fff;
+      border: 2px solid #1358af;
+      border-radius: 8px;
+      padding: 5px 10px;
+    }
+    #init {
+      display: none;
+    }
+    #code_form {
+      display: none;
+    }
+    #qr {
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <p>Status: <span id="status"></span></p>
+    <p id="init">
+      <button onclick="init()">Init Verify</button>
+      <div id="qr"></div>
+      <div id="code_form">
+        <input type="text" id="code" value="" placeholder="输入验证码确认初始化">
+        <button onclick="confirm()">Confirm</button>
+      </div>
+    </p>
+  </div>
+  <script>
+    const status = document.getElementById('status');
+    fetch('./inited').then(res => res.json()).then(res => {
+      status.innerText = res.data ? 'OK' : 'Not yet';
+      const init = document.getElementById('init');
+      if (res.data) {
+        init.parentElement.removeChild(init);
+        status.style.color = 'green';
+      } else {
+        status.style.color = 'red';
+        init.style.display = 'inline-block';
+      }
+    });
+    function init() {
+      fetch('./init').then(res => res.json()).then(res => {
+        if (res.code === 200) {
+          const qr = document.getElementById("qr");
+          qr.innerHTML = '';
+          new QRCode(qr, {
+            text: res.data,
+            width: 256,
+            height: 256,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+          })
+          document.getElementById('code_form').style.display = 'block';
+        }
+      });
+    }
+    function confirm() {
+      const code = document.getElementById('code').value;
+      fetch('./init', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code })
+      }).then(res => res.json()).then(res => {
+        if (res.code === 200) {
+          location.reload();
+        } else alert(res.message);
+      });
+    }
+  </script>
+</body>
+</html>

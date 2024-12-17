@@ -1,9 +1,11 @@
 const WebSocket = require('ws');
 const querystring = require('querystring');
-const config = require('../config');
+const { User } = require('./db');
+
 const wss = new WebSocket.Server({ port: 3334, verifyClient: function (info, cb) {
-  const token = querystring.parse(info.req.url.replace(/^.*\?/, '')).token
-    if (config.token.includes(token)) {
+    const user = new User();
+    const token = querystring.parse(info.req.url.replace(/^.*\?/, '')).token
+    if (!user.find(token)) {
       info.req.userId = token
       cb(true)
     } else {

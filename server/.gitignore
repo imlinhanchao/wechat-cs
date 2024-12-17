@@ -2,4 +2,5 @@ node_modules
 *.db
 config.json
 ds.json
-static
+static/file
+static/img
