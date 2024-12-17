@@ -34,7 +34,18 @@ function createRouter(bot, router) {
     }
   });
 
-  router.post('/verify', async (ctx) => {
+  router.all('/chat/:call', async (ctx, next) => {
+    if (!user.isInit) {
+      return ctx.body = {
+        code: 401,
+        message: '未初始化'
+      }
+    }
+    if (!verifyToken(ctx)) return;
+    await next();
+  });
+
+  router.post('/login', async (ctx) => {
     const body = ctx.request.body;
     if (!body.code || !user.verify(body.code)) {
       return ctx.body = {
@@ -62,20 +73,22 @@ function createRouter(bot, router) {
     return true;
   }
 
-  router.post('/send', async (ctx) => {
+  router.post('/chat/send', async (ctx) => {
     const body = ctx.request.body;
-    const token = ctx.request.header.authorization;
-    if (!verifyToken(ctx)) return;
     const { text, ...params } = body;
     const contact = await bot.Contact.find(params);
-    msgList.push(await contact.say(text));
+    const msg = await contact.say(text);
+    msgList.push(msg);
+    setTimeout(() => {
+      msgList.splice(msgList.indexOf(msg), 1);
+    }, 1000 * 60 * 5);
     ctx.body = {
       code: 200,
-      message: '发送成功'
+      message: '发送成功',
+      data: msg,
     }
   })
-  router.get('/contacts', async (ctx) => {
-    if (!verifyToken(ctx)) return;
+  router.get('/chat/contacts', async (ctx) => {
     const contacts = await bot.Contact.findAll();
     ctx.body = {
       code: 200,
@@ -92,13 +105,39 @@ function createRouter(bot, router) {
       })))
     }
   })  
-  router.get('/contact', async (ctx) => {
-    if (!verifyToken(ctx)) return;
+  router.get('/chat/contact', async (ctx) => {
     const query = ctx.request.query;
     const contact = await bot.Contact.find(query);
     ctx.body = {
       code: 200,
       data: contact
+    }
+  })
+  router.post('/chat/revoke', async (ctx) => {
+    const body = ctx.request.body;
+    const msg = msgList.find(m => m.msgId === body.id);
+    if (!msg) {
+      return ctx.body = {
+        code: 404,
+        message: '消息不存在'
+      }
+    }
+    await msg.revoke();
+    ctx.body = {
+      code: 200,
+      message: '撤回成功'
+    }
+  })
+  router.get('/chat/info', async (ctx) => {
+    ctx.body = {
+      code: 200,
+      data: await bot.info()
+    }
+  })
+  router.get('/chat/qrcode', async (ctx) => {
+    ctx.body = {
+      code: 200,
+      data: await bot.qrcode()
     }
   })
 }
