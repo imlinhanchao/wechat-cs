@@ -1,6 +1,6 @@
 {
-  "name": "webview-sample",
-  "displayName": "webview-sample",
+  "name": "wechaty",
+  "displayName": "wechaty",
   "description": "webview sample extension",
   "version": "0.0.1",
   "engines": {
@@ -12,49 +12,37 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "webview-sample.editorWebview",
-        "title": "Editor Webview"
-      }
-    ],
     "configuration": {
-      "title": "Webview Sample",
+      "title": "Wechaty",
       "properties": {
-        "webview-sample.fetchUrl": {
+        "wechaty.proxy": {
           "type": "string",
-          "default": "https://ip.sxisa.com"
+          "default": "http://127.0.0.1:10829"
+        },
+        "wechaty.websocket": {
+          "type": "string",
+          "default": "http://in.librejo.cn:3334"
+        },
+        "wechaty.server": {
+          "type": "string",
+          "default": "http://in.librejo.cn:3333"
         }
       }
     },
     "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "sidebar-webview",
-          "title": "Sidebar Webview",
-          "icon": "assets/logo.svg"
-        }
-      ],
       "panel": [
         {
-          "id": "panel-webview",
-          "title": "Panel Webview",
+          "id": "wechat-webview",
+          "title": "Wechat",
           "icon": "assets/logo.svg"
         }
       ]
     },
     "views": {
-      "sidebar-webview": [
+      "wechat-webview": [
         {
-          "id": "webview-sample.sidebar",
-          "name": "Sidebar Webview",
-          "type": "webview"
-        }
-      ],
-      "panel-webview": [
-        {
-          "id": "webview-sample.panel",
-          "name": "Panel Webview",
+          "id": "wechaty.panel",
+          "name": "Wechat",
           "type": "webview"
         }
       ]
@@ -81,6 +69,10 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "node-fetch": "<3.0.0"
+    "http-proxy-agent": "^7.0.2",
+    "https-proxy-agent": "^7.0.6",
+    "node-fetch": "<3.0.0",
+    "querystring": "^0.2.1",
+    "reconnecting-websocket": "^4.4.0"
   }
 }
