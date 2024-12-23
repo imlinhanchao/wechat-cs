@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test</title>
+  <style>
+    #login {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="login">
+    <input type="text" id="code" placeholder="二次验证码">
+    <button onclick="login()">Login</button>
+  </div>
+  <div id="msg"></div>
+  <script>
+    function watch(token) {
+      const ws = new WebSocket(`ws://in.librejo.cn:3334?token=${token}`);
+      ws.onopen = () => {
+        console.log('connected');
+      };
+      ws.onmessage = (msg) => {
+        const div = document.createElement('div');
+        div.innerText = msg.data;
+        document.getElementById('msg').appendChild(div);
+      };
+    }
+    const token = localStorage.getItem('token');
+    if (token) {
+      watch(token);
+    } else {
+      document.getElementById('login').style.display = 'block';
+    }
+    function login() {
+      const code = document.getElementById('code').value;
+      fetch('./login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      }).then(res => res.json()).then(res => {
+        if (res.code === 200) {
+          localStorage.setItem('token', res.data);
+          watch(res.data);
+          document.getElementById('login').style.display = 'none';
+        } else {
+          alert(res.msg);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
