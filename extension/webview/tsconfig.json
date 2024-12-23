@@ -45,5 +45,5 @@
     "vite.config.ts", 
     "windi.config.ts"
   ],
-  "exclude": ["node_modules", "dist", "**/*.js"]
+  "exclude": ["dist", "**/*.js"]
 }

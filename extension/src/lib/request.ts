@@ -30,7 +30,7 @@ export class defHttp {
           'Content-Type': 'application/json',
           'Authorization': this.token
         },
-        body: options.method != 'GET' ? JSON.stringify(options) : undefined,
+        body: options.method != 'GET' ? JSON.stringify(options.data) : undefined,
         agent: agent
       })
       .then(rsp => rsp.json())

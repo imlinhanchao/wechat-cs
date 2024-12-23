@@ -61,6 +61,7 @@
     "@types/node": "^18.19.29",
     "@types/node-fetch": "^2.6.11",
     "@types/vscode": "^1.87.0",
+    "@types/ws": "^8.5.13",
     "@typescript-eslint/eslint-plugin": "^7.4.0",
     "@typescript-eslint/parser": "^7.4.0",
     "@vscode/test-cli": "^0.0.8",
@@ -73,6 +74,7 @@
     "https-proxy-agent": "^7.0.6",
     "node-fetch": "<3.0.0",
     "querystring": "^0.2.1",
-    "reconnecting-websocket": "^4.4.0"
+    "reconnecting-websocket": "^4.4.0",
+    "ws": "^8.18.0"
   }
 }

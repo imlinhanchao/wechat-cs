@@ -1,5 +1,6 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { getConfig } from "../lib/utils";
+import WS from 'ws';
 
 export class ChatWs {
   rws: ReconnectingWebSocket;
@@ -7,7 +8,11 @@ export class ChatWs {
 
   constructor(token: string) {
     const { websocket } = getConfig();
-    this.rws = new ReconnectingWebSocket(`${websocket}?token=${token}`);
+    this.rws = new ReconnectingWebSocket(`${websocket}?token=${token}`, [], {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      WebSocket: WS,
+      connectionTimeout: 10000
+    });
 
     this.rws.onopen = (e) => {
       console.log("onopen");

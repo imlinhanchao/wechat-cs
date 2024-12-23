@@ -22,5 +22,5 @@
     "src/**/*.d.ts",
     "webview/types/types.d.ts",
   ],
-	"exclude": ["webview/src","webview/node_modules", "webview/types/global.d.ts"]
+	"exclude": ["webview/src","webview/node_modules", "webview/types/global.d.ts", "node_modules"]
 }

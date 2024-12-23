@@ -21,12 +21,16 @@ export class PanelProvider extends WebView implements vscode.WebviewViewProvider
     this._view = webviewView;
     this.setWebview(webviewView.webview, {
       name: 'wechaty-panel',
-      path: '/',
+      path: this.chat.isLogin ? '/' : '/login',
       onMessage: (message) => this.onMessage(message),
     });
   }
 
   async onMessage (message: IMessage) {
+    if (message.command === 'connect') {
+      this.chat.connect((data: any) => this.response('connect', data));
+      return;
+    }
     if (this.chat[message.command]) {
       if (this.chat[message.command] instanceof Function) {
         const rsp = await this.chat[message.command](message.data);

@@ -1,7 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/home/index.vue';
-import SidebarView from '../views/sidebar/index.vue';
-import PanelView from '../views/panel/index.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -9,17 +6,12 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: import('../views/home/index.vue')
     },
     {
-      path: '/sidebar',
-      name: 'sidebar',
-      component: SidebarView
-    },
-    {
-      path: '/panel',
-      name: 'panel',
-      component: PanelView
+      path: '/login',
+      name: 'login',
+      component: import('../views/login/index.vue')
     }
   ]
 });
