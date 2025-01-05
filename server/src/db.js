@@ -2,6 +2,7 @@ const SQLite = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 const { authenticator }  = require('otplib');
+const Bak = require('../interface/bak');
 class User {
   constructor() {
     this.config = null;
@@ -11,6 +12,7 @@ class User {
     const configPath = path.join(__dirname, '..', 'config.json');
     if (fs.existsSync(configPath)) {
       this.config = JSON.parse(fs.readFileSync(configPath).toString());
+      if (this.config.token) Bak.SyncSchedule();
     }
   }
 
@@ -27,11 +29,16 @@ class User {
     }
     if (this.verify(code)) {
       this.config = this.tmpConfig;
-      fs.writeFileSync(path.join(__dirname, '..', 'config.json'), JSON.stringify(this.config));
+      fs.writeFileSync(path.join(__dirname, '..', 'config.json'), JSON.stringify(this.config, null, 2));
     } else {
       return '';
     }
     return this.config.qrurl;
+  }
+
+  setBak({ url, user, passwd}) {
+    this.config = { ...this.config, url, user, passwd };
+    fs.writeFileSync(path.join(__dirname, '..', 'config.json'), JSON.stringify(this.config, null, 2));
   }
 
   verify (mfaCode) {

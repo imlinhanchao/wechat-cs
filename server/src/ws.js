@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const querystring = require('querystring');
 const { User } = require('./db');
+const Wechat = require('../interface/wechat');
 
 const wss = new WebSocket.Server({ port: 3334, verifyClient: function (info, cb) {
     const user = new User();
@@ -23,6 +24,7 @@ wss.on('connection', (ws, req) => {
 
 module.exports = {
   send(data) {
+    Wechat.saveMessage(data);
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN && !client.query.group) {
         client.send(JSON.stringify(data));

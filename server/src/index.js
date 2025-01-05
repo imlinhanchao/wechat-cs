@@ -65,7 +65,6 @@ const onMessage = async (msg) => {
   }
   // 回复文本消息
   if (msg.type() === bot.Message.Type.Text) { //类型详见 MessageType 表
-    //await msg.say("Hello, World!");
     wss.send({ type: bot.Message.Type.Text, data: msg.text(), ...base });
   }
   // 处理图片消息

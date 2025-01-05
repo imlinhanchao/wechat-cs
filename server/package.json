@@ -3,15 +3,22 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "initdb": "node script/initdb.js",
+    "sync": "node script/sync.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "form-data": "^4.0.1",
     "gewechaty": "^0.0.21",
+    "mysql2": "^3.12.0",
+    "node-fetch": "<3.0.0",
+    "node-schedule": "^2.1.1",
     "otplib": "^12.0.1",
     "querystring": "^0.2.1",
+    "sequelize": "^6.37.5",
     "ws": "^8.18.0"
   }
 }
