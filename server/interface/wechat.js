@@ -185,18 +185,34 @@ class Wechat
     }), { returning: true }));
   }
 
-  static saveMessage(msg) {
-    return MsgModel.create({
-      msgId: msg.id,
-      from: msg.in.id,
-      from: msg.in.name,
-      talkerId: msg.from.id,
-      talkerName: msg.from.name,
-      content: msg.data,
-      type: msg.type,
-      chat_time: msg.date,
-      source: JSON.stringify(msg.source || {}),
-    });
+  static async saveMessage(msg) {
+    try {
+      await MsgModel.create({
+        msgId: msg.id,
+        from: msg.in.id,
+        from: msg.in.name,
+        talkerId: msg.from.id,
+        talkerName: msg.from.name,
+        content: msg.data,
+        type: msg.type,
+        chat_time: msg.date,
+        source: JSON.stringify(msg.source || {}),
+      });
+  
+      if (msg.isRoom) {
+        ChatRoomModel.findOne({ where: { wxid: msg.in.id } }).then(room => {
+          room.update({ last_chat_time: msg.date });
+        });
+      } else {
+        ContactModel.findOne({ where: { wxid: msg.in.id } }).then(contact => {
+          contact.update({ last_chat_time: msg.date });
+        });
+      }
+      return true;
+    } catch (error) {
+      console.error('saveMessage: ', error.message, error.stack);
+      return false;
+    }
   }
   
   _queryTarget({ id, isRoom }) {
