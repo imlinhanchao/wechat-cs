@@ -99,4 +99,5 @@ exp.bitOp = (field, op, val, eq) => {
     return sequelize.where(sequelize.literal(`${field} ${op} ${val}`), eq);
 };
 exp.Op = Sequelize.Op;
+exp.sequelize = sequelize;
 module.exports = exp;

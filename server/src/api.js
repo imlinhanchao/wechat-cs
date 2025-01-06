@@ -107,8 +107,5 @@ function createRouter (bot, router, wss) {
 }
 
 module.exports = {
-  createRouter,
-  msgList,
-  contactToJson,
-  roomToJson,
+  createRouter
 }

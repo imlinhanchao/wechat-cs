@@ -1,3 +1,5 @@
+const { Op } = require('sequelize');
+const { sequelize } = require('../models/db');
 const ChatRoomModel = require('../models').chatroom;
 const ContactModel = require('../models').contact;
 const MsgModel = require('../models').msg;
@@ -130,6 +132,29 @@ class Wechat
     }
   }
 
+  async getNearContact({ count = 20, index = 0 }) {
+    const query = `
+      SELECT id, wxid, nickname, avatar, remark, last_chat_time, create_time, update_time
+      FROM wx.wx_contact
+      WHERE last_chat_time = 0
+      UNION
+      SELECT id, wxid, nickname, avatar, remark, last_chat_time, create_time, update_time
+      FROM wx.wx_chatroom
+      ORDER BY last_chat_time DESC
+      LIMIT :limit OFFSET :offset
+    `;
+
+    const results = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+      replacements: {
+        limit: count,
+        offset: index,
+      }
+    });
+
+    return results;
+  }
+
   async getMessage({ id, count = 20, index = 0, chat_time = 0 }) {
     const messages = await MsgModel.findAll({
       where: {
@@ -190,7 +215,7 @@ class Wechat
       await MsgModel.create({
         msgId: msg.id,
         from: msg.in.id,
-        from: msg.in.name,
+        fromName: msg.in.name,
         talkerId: msg.from.id,
         talkerName: msg.from.name,
         content: msg.data,
@@ -206,6 +231,39 @@ class Wechat
       } else {
         ContactModel.findOne({ where: { wxid: msg.in.id } }).then(contact => {
           contact.update({ last_chat_time: msg.date });
+        });
+      }
+      return true;
+    } catch (error) {
+      console.error('saveMessage: ', error.message, error.stack);
+      return false;
+    }
+  }
+
+  static async saveMessagesFromBak(msgs, source, sourceName) {
+    try {
+      if (msgs?.length === 0) return true;
+      await MsgModel.bulkCreate(msgs.map(msg => ({
+        msgId: msg.MsgSvrIDStr,
+        from: source,
+        fromName: sourceName,
+        talkerId: msg.WxId || (msg.IsSender && !msg.StrTalker.endsWith('@chatroom') ? msg.StrTalker : ''),
+        talkerName: msg.Remark || msg.NickName || '',
+        content: msg.Image || msg.StrContent || '[未知消息]',
+        type: msg.Type,
+        chat_time: msg.CreateTime,
+        source: msg.StrContent,
+      })));
+
+      if (msgs.length === 0) return true;
+  
+      if (source.endsWith('@chatroom')) {
+        ChatRoomModel.findOne({ where: { wxid: source } }).then(room => {
+          room.update({ last_chat_time: msgs[0].CreateTime });
+        });
+      } else {
+        ContactModel.findOne({ where: { wxid: source } }).then(contact => {
+          contact.update({ last_chat_time: msgs[0].CreateTime});
         });
       }
       return true;

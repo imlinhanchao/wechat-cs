@@ -33,19 +33,19 @@ async function syncContact(save=true) {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   }
   const bak = new Bak();
-  console.log(await bak.loginWait);
+  await bak.loginWait;
   let page = 1, size = 100;
   console.info('开始同步联系人');
   const allContacts = [];
   let contacts = await bak.searchContact({ page, size });
   if (save) await Wechat.saveContacts(contacts.filter(contact => !contact.UserName.startsWith('gh_')));
-  allContacts.push(...contacts);
+  allContacts.push(...contacts.filter(contact => !contact.UserName.startsWith('gh_')));
   console.info('同步联系人', contacts.length, '条', '/ 第', page, '页');
   page++;
   while(contacts.length === size) {
     contacts = await bak.searchContact({ page, size });
     if (save) await Wechat.saveContacts(contacts.filter(contact => !contact.UserName.startsWith('gh_')));
-    allContacts.push(...contacts);
+    allContacts.push(...contacts.filter(contact => !contact.UserName.startsWith('gh_')));
     console.info('同步联系人', contacts.length, '条', '/ 第', page, '页');
     page++;
   }
@@ -53,57 +53,48 @@ async function syncContact(save=true) {
   page = 1;
   size = 1000;
   console.info('开始同步群聊');
-  const allChatrooms = [];
   let chatrooms = await bak.searchContact({ page, size, ChatRoomType: 2 });
   if (save) await Wechat.saveChatrooms(chatrooms);
-  allChatrooms.push(...chatrooms);
+  allContacts.push(...chatrooms);
   console.info('同步群聊', chatrooms.length, '条', '/ 第', page, '页');
   page++;
   while (chatrooms.length === size) {
     chatrooms = await bak.searchContact({ page, size, ChatRoomType: 2 });
     if (save) await Wechat.saveChatrooms(chatrooms);
-    allChatrooms.push(...chatrooms);
+    allContacts.push(...chatrooms);
     console.info('同步群聊', chatrooms.length, '条', '/ 第', page, '页');
     page++;
   }
   return allContacts;
 }
 
-// async function syncMessage(contacts) {
-//   const bak = new Bak();
-//   console.log(await bak.loginWait);
-//   const allMessages = [];
-//   for (let i = 0; i < contacts.length; i++) {
-//     const contact = contacts[i];
-//     let page = 1, size = 1000;
-//     console.info(`开始同步`, contact.NickName, `消息${i}`);
-//     let messages = await bak.getMessage({ strUsrName: contact.UserName, page, size }).then(m => m.msgs);
-//     allMessages.push(...messages);
-//     await Wechat.saveMessages(messages);
-//     console.info('同步', contact.NickName, '消息', '/ 第', page, '页');
-//     page++;
-//     while (messages.length === size) {
-//       messages = await bak.getMessage({ strUsrName: contact.UserName, page, size }).then(m => m.msgs);
-//       allMessages.push(...messages);
-//       await Wechat.saveMessages(messages);
-//       console.info('同步', contact.NickName, '消息', '/ 第', page, '页');
-//       page++;
-//     }
-//   }
-//   return allMessages;
-// }
+async function syncMessage(contacts) {
+  const bak = new Bak();
+  console.log(await bak.loginWait);
+  for (let i = 0; i < contacts.length; i++) {
+    const contact = contacts[i];
+    const user = contact.UserName || contact.wxid;
+    const nick = contact.NickName || contact.Remark || contact.nickname ;
+    let page = 1, size = 500;
+    console.info(`开始同步`, nick, `消息${i}`);
+    let messages = await bak.getMessage({ strUsrName: user, page, size }).then(m => m.msgs);
+    await Wechat.saveMessagesFromBak(messages, user, nick);
+    console.info('同步', nick, '消息', '/ 第', page, '页');
+  }
+}
 
 async function main() {
   try {
-    const contacts = await syncContact(true);
+    const contacts = await syncContact(false);
     fs.writeFileSync(
       path.join(__dirname, '..', 'contacts.json'), 
       JSON.stringify(contacts.map(c => c.UserName), null, 2)
     );
+    await syncMessage(contacts);
     console.log('同步完成');
   } catch (error) {
     throw error;
   }
 }
 
-main().then(console.log).catch(console.error);
+main().catch(console.error);
