@@ -1,8 +1,27 @@
+const jsdom = require("jsdom");
 const { Op } = require('sequelize');
 const { sequelize } = require('../models/db');
 const ChatRoomModel = require('../models').chatroom;
 const ContactModel = require('../models').contact;
 const MsgModel = require('../models').msg;
+
+const parseXml = (xmlString) => {
+  return new jsdom.JSDOM(xmlString);
+};
+
+const getThumbFromStringContent = (content) => {
+  try {
+      let dom = parseXml(content).window.document;
+      const emoji = dom.querySelector('emoji');
+      if (emoji) {
+          return emoji.getAttribute('cdnurl');
+      }
+      return '';
+  } catch (e) {
+      console.error(e)
+  }
+  return '';
+}
 
 
 class Wechat 
@@ -146,8 +165,8 @@ class Wechat
       },
       raw: true,
       order: [['chat_time', 'DESC']],
-      limit: count,
-      offset: index,
+      limit: Number(count),
+      offset: Number(index),
     });
     return {
       code: 200,
@@ -231,14 +250,16 @@ class Wechat
   static async saveMessagesFromBak(msgs, source, sourceName) {
     try {
       if (!msgs?.length) return true;
+      const typeMap = {'1': 'text', '3': 'image', '34': 'voice', '43': 'video', '47': 'emoji', '49': 'quote', '106': 'file'};
       await MsgModel.bulkCreate(msgs.map(msg => ({
         msgId: msg.MsgSvrIDStr,
         from: source,
         fromName: sourceName,
         talkerId: msg.WxId || (msg.IsSender && !msg.StrTalker.endsWith('@chatroom') ? msg.StrTalker : ''),
         talkerName: msg.Remark || msg.NickName || '',
-        content: msg.Image || msg.StrContent || '[未知消息]',
-        type: msg.Type,
+        content: msg.Image || msg.Thumb || (msg.type == 47 || msg.StrContent.includes('<emoji') ? getThumbFromStringContent(msg.StrContent) : msg.StrContent) || '[未知消息]',
+        type: msg.Type + msg.SubType,
+        msg_type: typeMap[(msg.Type + msg.SubType).toString()] || 'text',
         chat_time: msg.CreateTime,
         source: msg.StrContent,
       })));

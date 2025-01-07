@@ -92,6 +92,7 @@ async function main() {
     );
     await syncMessage(contacts);
     console.log('同步完成');
+    process.exit(0);
   } catch (error) {
     throw error;
   }

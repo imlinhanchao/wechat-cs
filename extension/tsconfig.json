@@ -8,7 +8,7 @@
 		],
 		"sourceMap": true,
 		"rootDir": "src",
-    "typeRoots": ["./node_modules/@types/", "./webview/types"],
+    "typeRoots": ["./node_modules/@types/"],
 		"resolveJsonModule": true,
 		"strict": true,   /* enable all strict type-checking options */
 		/* Additional Checks */
@@ -20,7 +20,6 @@
     "*.d.ts",
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "webview/types/types.d.ts",
   ],
-	"exclude": ["webview/src","webview/node_modules", "webview/types/global.d.ts", "node_modules"]
+	"exclude": ["webview/*", "node_modules/*"]
 }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useMessage } from '@/hooks/useMessage';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import ContactView from './contact.vue';
 
+const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
 addListener('connect', (d: IMessage) => {
+  if (!d.type) return;
   console.log(d);
   if (d.isRoom) {
     const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
@@ -27,6 +29,9 @@ addListener('connect', (d: IMessage) => {
   if (!contact) return;
   if (!contact.msgs) contact.msgs = [];
   contact.msgs.push(d);
+  if (currentId.value === contact.wxid) {
+    contactRef.value?.refresh(contact);
+  }
 });
 postMsg('connect');
 
@@ -44,11 +49,17 @@ const currentId = ref<string>();
 const currentContact = computed(() => {
   return contacts.value.find((c: IContact) => c.id === currentId.value);
 });
+function switchContact(id: string) {
+  currentId.value = id;
+  nextTick(() => {
+    if (currentContact.value) contactRef.value?.init(currentContact.value);
+  });
+}
 </script>
 
 <template>
   <el-container>
-    <el-aside class="border-r border-gray-800" width="200px">
+    <el-aside class="border-r border-gray-800 p-1" width="200px">
       <el-container class="box-card">
         <el-header class="bg-gray-800 bg-opacity-50 !p-1" height="auto">
           <div v-if="info" class="flex space-x-3 items-center">
@@ -60,7 +71,7 @@ const currentContact = computed(() => {
           <template v-for="c in contacts" :key="c.id">
             <section
               class="flex space-x-3 items-center py-1 px-1 border-b border-gray-800 cursor-pointer truncate"
-              @click="currentId = c.id"
+              @click="switchContact(c.id)"
               :class="{ 'text-[#e5d815] font-bold': currentContact && currentContact.id === c.id }"
             >
               <!-- <el-avatar :size="16" :src="c.avatarUrl" /> -->
@@ -71,7 +82,7 @@ const currentContact = computed(() => {
                 </span>
                 <span
                   v-if="c.msgs?.filter((m) => m.type && !m.isReaded).length"
-                  class="bg-[#cd3131] inline-block p-2 text-black"
+                  class="bg-[#cd3131] inline-block px-1 text-black font-bold rounded-full text-xs"
                   >{{ c.msgs?.filter((m) => m.type && !m.isReaded).length || 0 }}</span
                 >
               </section>
@@ -81,7 +92,12 @@ const currentContact = computed(() => {
       </el-container>
     </el-aside>
     <el-main>
-      <ContactView v-if="currentContact" :contact="currentContact" />
+      <ContactView
+        ref="contactRef"
+        v-if="currentContact"
+        :contact="currentContact"
+        :key="currentContact.wxid"
+      />
     </el-main>
   </el-container>
 </template>

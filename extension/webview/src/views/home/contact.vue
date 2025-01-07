@@ -28,21 +28,29 @@ invoke('config').then((data) => {
 
 const footerRef = ref();
 watch(
-  () => props.contact.wxid,
+  () => props.contact.msgs?.length,
   () => {
-    if (!props.contact.msgs.length) postMsg('history', { id: props.contact.wxid });
-    nextTick(() => footerRef.value.scrollIntoView(true));
+    refresh(props.contact);
   }
 );
-watch(
-  () => props.contact.msgs.length,
-  () => {
-    nextTick(() => footerRef.value.scrollIntoView(true));
-    props.contact.msgs.forEach((m) => {
-      m.isReaded = true;
+
+async function init(contact: IContact) {
+  if (!contact.msgs?.length)
+    await invoke('history', { id: props.contact.wxid, count: 100, index: 0 }).then((data) => {
+      data.reverse();
+      contact.msgs = data;
     });
-  }
-);
+  refresh(contact);
+}
+
+function refresh(contact: IContact) {
+  nextTick(() => footerRef.value.scrollIntoView(true));
+  contact.msgs.forEach((m) => {
+    m.isReaded = true;
+  });
+}
+
+defineExpose({ init, refresh });
 </script>
 <template>
   <el-container>
@@ -57,6 +65,11 @@ watch(
         <img
           :src="`${config.server}/emoji?url=${encodeURIComponent(m.data)}`"
           v-if="m.type == 'emoji'"
+          class="max-w-20px !inline"
+        />
+        <img
+          :src="`${config.server}/emoji?url=${encodeURIComponent(m.data)}`"
+          v-if="m.type == 'image'"
           class="max-w-20px !inline"
         />
       </section>

@@ -30,27 +30,20 @@ const bot = new GeweBot({
 // 监听消息事件
 const onMessage = async (msg) => {
   let from = await msg.from();
-  from = {
-    alias: await from.alias(),
-    avatarUrl: await from.avatar(),
-    name: from.name(),
-    type: from.type(),
-    gender: from.gender(),
-    province: from.province(),
-    city: from.city(),
-    self: from.self(),
-    id: from._wxid 
-  }
+  from = Wechat.contactToJson(from);
   let src;
   const sourceId = msg.toId == msg.wxid ? msg.fromId : msg.toId;
   const isRoom = sourceId.endsWith('@chatroom');
   if (isRoom) {
     const chatroom = bot.db.findOneByChatroomId(sourceId);
-    const room = new bot.Room(chatroom)
+    let room;
+    if (chatroom) room = new bot.Room(chatroom);
+    else room = await msg.room();
     src = Wechat.roomToJson(room);
   } else {
     const contact = await bot.Contact.find({ id: sourceId });
-    src = await Wechat.contactToJson(contact);
+    if (contact) src = await Wechat.contactToJson(contact);
+    else src = sourceId == msg.toId ? Wechat.contactToJson(await msg.to()) : from;
   }
   // 处理消息...
   const base = {
@@ -126,7 +119,6 @@ bot
   .then(async ({app, router}) => {
     createRouter(bot, router, wss) // 创建路由
     app.use(router.routes()).use(router.allowedMethods());
-    
   })
   .catch((e) => {
     console.error(e);

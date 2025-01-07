@@ -13,6 +13,7 @@
   "dependencies": {
     "form-data": "^4.0.1",
     "gewechaty": "^0.0.21",
+    "jsdom": "^25.0.1",
     "mysql2": "^3.12.0",
     "node-fetch": "<3.0.0",
     "node-schedule": "^2.1.1",

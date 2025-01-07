@@ -76,6 +76,30 @@ export class Chat {
       });
   }
 
+  async history(params: any) {
+    return defHttp.get<any>('/wechat/getMessage', params)
+      .then((res) => {
+        return res.map((item: any) => {
+          return {
+            id: item.msgId,
+            type: item.msg_type,
+            data: item.content,
+            from: { name: item.talkerName, id: item.talkerId },
+            in: { name: item.fromName, id: item.from },
+            isRoom: item.from.endsWith('@chatroom'),
+            self: !item.talkerId,
+            date: item.chat_time,
+            age: 0,
+            isReaded: true,
+          }
+        });
+      })
+      .catch(err => {
+        vscode.window.showInformationMessage(err.message)
+        return false
+      });
+  }
+
   async send(params: any) {
     return defHttp.post<any>('/wechat/send', params)
       .catch(err => {
