@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const wss = require('./ws');
 const { createRouter } = require('./api');
+const Wechat = require("../interface/wechat");
 
 const WEGE_BASE_API_URL = `http://127.0.0.1:2531/v2/api`;
 const WEGE_FILE_API_URL = `http://127.0.0.1:2532/download`;
@@ -40,23 +41,23 @@ const onMessage = async (msg) => {
     self: from.self(),
     id: from._wxid 
   }
-  let room = await msg.room();
-  if (room) {
-    room = {
-      alias: room.name,
-      avatarUrl: room.avatarImg,
-      name: room.name,
-      type: 2,
-      id: room.chatroomId,
-      room: { ...room },
-    }
+  let src;
+  const sourceId = msg.toId == msg.wxid ? msg.fromId : msg.toId;
+  const isRoom = sourceId.endsWith('@chatroom');
+  if (isRoom) {
+    const chatroom = bot.db.findOneByChatroomId(sourceId);
+    const room = new bot.Room(chatroom)
+    src = Wechat.roomToJson(room);
+  } else {
+    const contact = await bot.Contact.find({ id: sourceId });
+    src = await Wechat.contactToJson(contact);
   }
   // 处理消息...
   const base = {
     id: msg._msgId,
     from,
-    in: room || from,
-    isRoom: !!room,
+    in: src,
+    isRoom,
     self: await msg.self(),
     mentionSelf: await msg.mentionSelf(),
     date: msg.date(),
@@ -95,10 +96,16 @@ const onMessage = async (msg) => {
   else if (msg.type() === bot.Message.Type.Emoji) {
     //await msg.say("收到表情");
     const data = bot.Message.getXmlToJson(msg.text());
-    console.log(data.msg.emoji.cdnurl);
     wss.send({ type: bot.Message.Type.Emoji, data: data.msg.emoji.cdnurl, ...base });
   }
-  else {
+  else if (msg.type() === bot.Message.Type.Quote) {
+    const data = bot.Message.getXmlToJson(msg.text());
+    wss.send({ type: bot.Message.Type.Emoji, data: { 
+      content: data.msg.appmsg.title, 
+      refermsg: data.msg.appmsg.refermsg 
+    }, ...base });
+  }
+  else if(msg.type && isNaN(msg.type)) {
     const data = bot.Message.getXmlToJson(msg.text());
     wss.send({ type: msg.type(), data, ...base });
   }

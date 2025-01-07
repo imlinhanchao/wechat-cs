@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 // import Icon from '@/components/Icon';
 import { useMessage } from '@/hooks/useMessage';
 
@@ -14,9 +14,9 @@ const { postMsg, invoke } = useMessage();
 async function send() {
   if (!message.value) return;
   await postMsg('send', {
-    id: props.contact.id,
+    id: props.contact.wxid,
     text: message.value,
-    isRoom: props.contact.isRoom
+    isRoom: props.contact.wxid.endsWith('@chatroom')
   });
   message.value = '';
 }
@@ -25,26 +25,47 @@ const config = ref<any>({});
 invoke('config').then((data) => {
   config.value = data;
 });
+
+const footerRef = ref();
+watch(
+  () => props.contact.wxid,
+  () => {
+    if (!props.contact.msgs.length) postMsg('history', { id: props.contact.wxid });
+    nextTick(() => footerRef.value.scrollIntoView(true));
+  }
+);
+watch(
+  () => props.contact.msgs.length,
+  () => {
+    nextTick(() => footerRef.value.scrollIntoView(true));
+    props.contact.msgs.forEach((m) => {
+      m.isReaded = true;
+    });
+  }
+);
 </script>
 <template>
   <el-container>
-    <el-main class="!px-2">
+    <el-main class="!p-2" ref="mainRef">
       <section v-for="m in contact.msgs" :key="m.id" :class="{ 'font-bold': m.self }">
-        <span class="text-[#12bc79]" v-if="contact.id.endsWith('@chatroom')">
-          [{{ m.from.alias }}]:
+        <span class="text-[#12bc79]" v-if="contact.wxid.endsWith('@chatroom')">
+          [{{ m.from.name }}]:
         </span>
+        <span v-else-if="!m.from.self && m.type" class="text-[#1fd18b]">>&nbsp;</span>
+        <span v-else-if="m.from.self && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
         <span v-if="m.type == 'text'">{{ m.data }}</span>
         <img
           :src="`${config.server}/emoji?url=${encodeURIComponent(m.data)}`"
           v-if="m.type == 'emoji'"
-          class="max-w-20px"
+          class="max-w-20px !inline"
         />
       </section>
+      <section ref="footerRef"></section>
     </el-main>
     <el-footer class="!p-0" height="auto">
-      <el-input v-model="message" clearable @key-down.enter="send" autofocus>
+      <el-input v-model="message" clearable @keydown.enter="send" autofocus>
         <template #prefix>
-          <span class="text-[#29b8db] font-bold">{{ contact.alias }}</span>
+          <span class="text-[#29b8db] font-bold">{{ contact.nickname }}</span>
         </template>
       </el-input>
     </el-footer>

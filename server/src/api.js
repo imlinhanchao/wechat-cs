@@ -12,7 +12,7 @@ function createRouter (bot, router, wss) {
     const token = ctx.request.header.authorization;
     if (!token || !user.find(token)) {
       ctx.body = {
-        code: 401,
+        code: 403,
         message: '未授权'
       }
       return false;

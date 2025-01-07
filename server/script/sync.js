@@ -85,7 +85,7 @@ async function syncMessage(contacts) {
 
 async function main() {
   try {
-    const contacts = await syncContact(false);
+    const contacts = await syncContact(true);
     fs.writeFileSync(
       path.join(__dirname, '..', 'contacts.json'), 
       JSON.stringify(contacts.map(c => c.UserName), null, 2)

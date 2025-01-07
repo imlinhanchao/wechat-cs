@@ -42,15 +42,18 @@ export class Chat {
   }
 
   async info() {
-    return defHttp.get<any>('/chat/info')
+    return defHttp.get<any>('/wechat/info')
       .catch(err => {
-        vscode.window.showInformationMessage(err.message)
+        if (err.message == '未授权') {
+          this.context.globalState.update('token', '');
+          defHttp.token = this.token = '';
+        } else vscode.window.showInformationMessage(err.message)
         return false
       });
   }
 
   async rooms() {
-    return defHttp.get<any>('/chat/rooms')
+    return defHttp.get<any>('/wechat/rooms')
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false
@@ -58,7 +61,7 @@ export class Chat {
   }
   
   async contacts() {
-    return defHttp.get<any>('/chat/contacts')
+    return defHttp.get<any>('/wechat/near')
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false
@@ -66,7 +69,7 @@ export class Chat {
   }
 
   async contact(params: any) {
-    return defHttp.get<any>('/chat/contact', params)
+    return defHttp.get<any>('/wechat/contact', params)
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false
@@ -74,7 +77,7 @@ export class Chat {
   }
 
   async send(params: any) {
-    return defHttp.post<any>('/chat/send', params)
+    return defHttp.post<any>('/wechat/send', params)
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false
@@ -82,7 +85,7 @@ export class Chat {
   }
 
   async revoke(params: any) {
-    return defHttp.post<any>('/chat/revoke', params)
+    return defHttp.post<any>('/wechat/revoke', params)
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false

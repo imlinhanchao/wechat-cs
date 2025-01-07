@@ -4,31 +4,6 @@ const ChatRoomModel = require('../models').chatroom;
 const ContactModel = require('../models').contact;
 const MsgModel = require('../models').msg;
 
-async function contactToJson (contact) {
-  return {
-    alias: await contact.alias(),
-    avatarUrl: await contact.avatar(),
-    name: contact.name(),
-    type: contact.type(),
-    gender: contact.gender(),
-    province: contact.province(),
-    city: contact.city(),
-    self: contact.self(),
-    id: contact._wxid
-  }
-}
-
-function roomToJson (room) {
-  return {
-    alias: room.name || room.remark || room.nickName,
-    avatarUrl: room.avatarImg || room.smallHeadImgUrl,
-    name: room.name || room.nickName,
-    type: 2,
-    id: room.chatroomId,
-    room: { ...room },
-  }
-}
-
 
 class Wechat 
 {
@@ -40,16 +15,16 @@ class Wechat
   }
 
   async send({ text, ...params}) {
-    const contact = await queryTarget(params);
+    const contact = await this._queryTarget(params);
     const msg = await contact.say(text);
-    const info = await bot.info();
+    const info = await this.bot.info();
     Wechat.msgList.push(msg);
     let room = false;
     if (contact.chatroomId) {
-      room = await roomToJson(contact)
+      room = await Wechat.roomToJson(contact)
     }
     this.wss.send({
-      type: bot.Message.Type.Text,
+      type: this.bot.Message.Type.Text,
       id: msg.newMsgId.toString(),
       data: text,
       from: {
@@ -61,9 +36,9 @@ class Wechat
         province: info.province,
         city: info.city,
         self: true,
-        id: info.wxid
+        id: contact.wxid
       },
-      in: room || await contactToJson(contact),
+      in: room || await Wechat.contactToJson(contact),
       isRoom: !!room,
       self: true,
     });
@@ -80,7 +55,7 @@ class Wechat
   }
 
   rooms() {
-    const rooms = bot.db.findAllRooms();
+    const rooms = this.bot.db.findAllRooms();
     return {
       code: 200,
       data: rooms
@@ -88,18 +63,18 @@ class Wechat
   }
 
   async contacts() {
-    const contacts = await bot.Contact.findAll();
+    const contacts = await this.bot.Contact.findAll();
     return {
       code: 200,
-      data: (await Promise.all(contacts.map(contactToJson))).concat(bot.db.findAllRooms().map(roomToJson))
+      data: (await Promise.all(contacts.map(Wechat.contactToJson))).concat(bot.db.findAllRooms().map(Wechat.roomToJson))
     }
   }
 
   async contact(query) {
-    const contact = await bot.Contact.find(query);
+    const contact = await this.bot.Contact.find(query);
     return {
       code: 200,
-      data: await contactToJson(contact)
+      data: await Wechat.contactToJson(contact)
     }
   }
 
@@ -121,14 +96,21 @@ class Wechat
   async info() {
     return {
       code: 200,
-      data: await bot.info()
+      data: await this.bot.info()
     }
   }
 
   async qrcode() {
     return {
       code: 200,
-      data: await bot.qrcode()
+      data: await this.bot.qrcode()
+    }
+  }
+
+  async near(query) {
+    return {
+      code: 200,
+      data: await this.getNearContact(query)
     }
   }
 
@@ -136,7 +118,6 @@ class Wechat
     const query = `
       SELECT id, wxid, nickname, avatar, remark, last_chat_time, create_time, update_time
       FROM wx.wx_contact
-      WHERE last_chat_time = 0
       UNION
       SELECT id, wxid, nickname, avatar, remark, last_chat_time, create_time, update_time
       FROM wx.wx_chatroom
@@ -212,25 +193,32 @@ class Wechat
 
   static async saveMessage(msg) {
     try {
+      const recvTypes = [
+        'file', 'voice', 'emoji', 'image', 'text', 'video', 'quote', 
+      ]
+      if (!recvTypes.includes(msg.type?.toLowerCase()) || !msg.from.id) {
+        return false;
+      }
       await MsgModel.create({
         msgId: msg.id,
         from: msg.in.id,
         fromName: msg.in.name,
         talkerId: msg.from.id,
         talkerName: msg.from.name,
-        content: msg.data,
-        type: msg.type,
-        chat_time: msg.date,
+        content: typeof msg.data == 'string' ? msg.data : JSON.stringify(msg.data),
+        msg_type: msg.type,
+        type: 0,
+        chat_time: msg.date.getTime() / 1000,
         source: JSON.stringify(msg.source || {}),
       });
   
       if (msg.isRoom) {
         ChatRoomModel.findOne({ where: { wxid: msg.in.id } }).then(room => {
-          room.update({ last_chat_time: msg.date });
+          room?.update({ last_chat_time: msg.date.getTime() / 1000 });
         });
       } else {
         ContactModel.findOne({ where: { wxid: msg.in.id } }).then(contact => {
-          contact.update({ last_chat_time: msg.date });
+          contact?.update({ last_chat_time: msg.date.getTime() / 1000 });
         });
       }
       return true;
@@ -242,7 +230,7 @@ class Wechat
 
   static async saveMessagesFromBak(msgs, source, sourceName) {
     try {
-      if (msgs?.length === 0) return true;
+      if (!msgs?.length) return true;
       await MsgModel.bulkCreate(msgs.map(msg => ({
         msgId: msg.MsgSvrIDStr,
         from: source,
@@ -275,12 +263,37 @@ class Wechat
   
   _queryTarget({ id, isRoom }) {
     if (!isRoom && !id.endsWith('@chatroom')) {
-      return bot.Contact({ id });
+      return this.bot.Contact.find({ id });
     } else {
-      return new bot.Room(bot.db.findOneByChatroomId(id));
+      return new (this.bot.Room)(this.bot.db.findOneByChatroomId(id));
     }
   }
 
+  static async contactToJson (contact) {
+    return {
+      alias: await contact.alias(),
+      avatarUrl: await contact.avatar(),
+      name: contact.name(),
+      type: contact.type(),
+      gender: contact.gender(),
+      province: contact.province(),
+      city: contact.city(),
+      self: contact.self(),
+      id: contact._wxid
+    }
+  }
+  
+  static roomToJson (room) {
+    return {
+      alias: room.name || room.remark || room.nickName,
+      avatarUrl: room.avatarImg || room.smallHeadImgUrl,
+      name: room.name || room.nickName,
+      type: 2,
+      id: room.chatroomId,
+      room: { ...room },
+    }
+  }
+  
 }
 
 module.exports = Wechat;

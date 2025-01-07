@@ -44,6 +44,11 @@ let orm = {
         comment: '消息来源',
         defaultValue: '',
     },
+    msg_type: {
+        type: db.STRING(128),
+        comment: '实时消息类型',
+        defaultValue: '',
+    }
 };
 let table_name = prefix + 'msg';
 module.exports = db.defineModel(table_name, orm, {

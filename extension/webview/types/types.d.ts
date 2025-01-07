@@ -66,53 +66,33 @@ declare interface IUser {
 }
 
 declare interface IContact {
-  /**
-   * 备注
-   */
-  alias: string;
-  /**
-   * 头像
-   */
-  avatarUrl: string;
-  /**
-   * 昵称
-   */
-  name: string;
-  type: number;
-  /**
-   * 性别：1男，2女
-   */
-  gender?: number;
-  /**
-   * 省份
-   */
-  province?: string;
-  /**
-   * 城市
-   */
-  city?: string;
-  /**
-   * 是否是自己
-   */
-  self: boolean;
-  /**
-   * 微信id
-   */
   id: string;
+  wxid: string;
+  nickname: string;
+  avatar: string;
+  remark: string;
+  last_chat_time: number;
+  msgs: IMessage[];
+}
 
-  msgs?: IMessage[];
-
-  isRoom?: boolean;
-
-  room?: IRoom;
+declare interface IWechatContact {
+  alias: string;
+  avatarUrl: string;
+  name: string;
+  type: string;
+  gender: string;
+  province: string;
+  city: string;
+  self: string;
+  id: string;
 }
 
 declare interface IMessage {
   id: string;
   type: string;
   data: string;
-  from: IContact;
-  in: IContact;
+  from: IWechatContact;
+  in: IWechatContact;
   isRoom: boolean;
   self: boolean;
   date: string;

@@ -7,11 +7,20 @@ const { addListener, postMsg, invoke } = useMessage();
 addListener('connect', (d: IMessage) => {
   console.log(d);
   if (d.isRoom) {
-    const contact = contacts.value.find((c: IContact) => c.id === d.in.id);
-    if (!contact) contacts.value.unshift(d.in);
+    const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
+    if (!contact)
+      contacts.value.unshift({
+        id: d.in.id,
+        wxid: d.in.id,
+        avatar: d.in.avatarUrl,
+        nickname: d.in.name,
+        remark: d.in.alias,
+        last_chat_time: Date.now(),
+        msgs: []
+      });
   }
-  const contactIndex = contacts.value.findIndex((c: IContact) => c.id === d.in.id);
-  const contact = contacts.value.find((c: IContact) => c.id === d.in.id);
+  const contactIndex = contacts.value.findIndex((c: IContact) => c.wxid === d.in.id);
+  const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
   if (contactIndex > 0) {
     contacts.value.unshift(contacts.value.splice(contactIndex, 1)[0]);
   }
@@ -56,10 +65,15 @@ const currentContact = computed(() => {
             >
               <!-- <el-avatar :size="16" :src="c.avatarUrl" /> -->
               <section class="truncate flex space-x-2">
-                <span class="truncate">{{ c.alias || c.name }}</span>
-                <span class="text-sm text-gray-700" v-if="c.alias && c.alias != c.name">
-                  {{ c.name }}
+                <span class="truncate">{{ c.remark || c.nickname }}</span>
+                <span class="text-sm text-gray-700" v-if="c.remark && c.remark != c.nickname">
+                  {{ c.nickname }}
                 </span>
+                <span
+                  v-if="c.msgs?.filter((m) => m.type && !m.isReaded).length"
+                  class="bg-[#cd3131] inline-block p-2 text-black"
+                  >{{ c.msgs?.filter((m) => m.type && !m.isReaded).length || 0 }}</span
+                >
               </section>
             </section>
           </template>
