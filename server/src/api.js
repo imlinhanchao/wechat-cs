@@ -32,6 +32,7 @@ function createRouter (bot, router, wss) {
     return true;
   }
 
+  let config;
   if (!user.isInit) {
     router.get('/init', async (ctx) => {
       ctx.body = {
@@ -56,6 +57,14 @@ function createRouter (bot, router, wss) {
 
   router.get('/emoji', async (ctx) => {
     const url = ctx.query.url;
+    if (url.startsWith('wxid_')) {
+      ctx.redirect(`${user.config.url}/image?img_path=${url}&session_id=1`);
+      return;
+    }
+    if (url.startsWith('./img')) {
+      ctx.redirect(url);
+      return;
+    }
     await fetch(url).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => {
       ctx.body = Buffer.from(buffer)
     })
