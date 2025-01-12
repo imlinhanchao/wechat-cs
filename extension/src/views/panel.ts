@@ -2,15 +2,18 @@ import vscode from 'vscode';
 import { IMessage, WebView } from "../lib/webview";
 import { getConfig, prompt } from '../lib/utils';
 import { Chat } from '../api/chat';
+import path from 'path';
 
 export class PanelProvider extends WebView implements vscode.WebviewViewProvider {
 	public static readonly viewType = 'wechaty.panel';
 	private _view?: vscode.WebviewView;
   private chat: any;
+  private _extensionPath: string;
 
   constructor(context: vscode.ExtensionContext) {
     super(context);
     this.chat = new Chat(context);
+    this._extensionPath = context.extensionPath
   }
 
   public resolveWebviewView(

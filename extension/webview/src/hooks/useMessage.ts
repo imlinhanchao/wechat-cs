@@ -2,7 +2,8 @@ import { useEventListener } from '@/hooks/useEventListener';
 import { clone } from '@/utils';
 import { onUnmounted } from 'vue';
 
-window.vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : window.parent;
+window.vscode =
+  window.vscode || (window.acquireVsCodeApi ? window.acquireVsCodeApi() : window.parent);
 
 export type MessageHandler = (data: any) => void;
 

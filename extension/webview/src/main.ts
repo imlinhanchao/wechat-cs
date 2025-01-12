@@ -10,7 +10,8 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 
-window.vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : window.parent;
+window.vscode =
+  window.vscode || (window.acquireVsCodeApi ? window.acquireVsCodeApi() : window.parent);
 
 const app = createApp(App);
 
