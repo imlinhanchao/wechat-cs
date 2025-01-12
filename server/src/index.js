@@ -30,7 +30,7 @@ const bot = new GeweBot({
 // 监听消息事件
 const onMessage = async (msg) => {
   let from = await msg.from();
-  from = Wechat.contactToJson(from);
+  from = await Wechat.contactToJson(from);
   let src;
   const sourceId = msg.toId == msg.wxid ? msg.fromId : msg.toId;
   const isRoom = sourceId.endsWith('@chatroom');
