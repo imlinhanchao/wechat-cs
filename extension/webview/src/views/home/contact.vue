@@ -2,6 +2,7 @@
 import { nextTick, ref, watch } from 'vue';
 // import Icon from '@/components/Icon';
 import { useMessage } from '@/hooks/useMessage';
+import Msg from './components/msg.vue';
 
 const props = defineProps<{
   contact: IContact;
@@ -61,17 +62,7 @@ defineExpose({ init, refresh });
         </span>
         <span v-else-if="!m.from.self && m.type" class="text-[#1fd18b]">>&nbsp;</span>
         <span v-else-if="m.from.self && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
-        <span v-if="m.type == 'text'">{{ m.data }}</span>
-        <img
-          :src="`${config.server}/emoji?url=${encodeURIComponent(m.data)}`"
-          v-if="m.type == 'emoji'"
-          class="max-w-20px !inline"
-        />
-        <img
-          :src="`${config.server}/emoji?url=${encodeURIComponent(m.data)}`"
-          v-if="m.type == 'image'"
-          class="max-w-20px !inline"
-        />
+        <Msg :msg="m" :config="config" />
       </section>
       <section ref="footerRef"></section>
     </el-main>
