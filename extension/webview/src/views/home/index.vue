@@ -7,7 +7,7 @@ import Icon from '@/components/Icon';
 const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
 addListener('connect', (d: IMessage) => {
-  if (!d.type) return;
+  if (!d.type || d.in.id.startsWith('gh_')) return;
   {
     const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
     if (!contact)
