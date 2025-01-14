@@ -126,6 +126,10 @@ export class Chat {
     });
   }
 
+  get isConnect() {
+    return !!this.chatws;
+  }
+
   async config() {
     return getConfig();
   }

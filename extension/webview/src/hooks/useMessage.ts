@@ -19,6 +19,7 @@ export function useMessage() {
       const message = e.data;
       if (!messageHandler[message.command]) return;
       messageHandler[message.command].forEach((handler) => handler(message.data));
+      console.info('onMessage', message);
     }
   });
   /**
@@ -58,6 +59,7 @@ export function useMessage() {
     // 开发模式，将 command 修改为 forward
     if (!window.acquireVsCodeApi) message.command = 'forward';
     window.vscode.postMessage(message, '*');
+    console.info('postMsg', message);
   }
   /**
    * @description 发送 command 到 extension 并等待返回值
@@ -77,6 +79,7 @@ export function useMessage() {
       };
       addListener(message.key, handler);
       window.vscode.postMessage(message, '*');
+      console.info('invoke', message);
     });
   }
 

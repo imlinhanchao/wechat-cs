@@ -15,11 +15,20 @@ onMounted(async () => {
   if (route.name != 'login' && (await invoke('isLogin')) === false) {
     router.push('/login');
   }
+  console.info('route:', route);
 });
 </script>
 
 <template>
-  <RouterView />
+  <el-container>
+    <RouterView>
+      <template #default="{ Component, route: r }">
+        <KeepAlive>
+          <component :is="Component" :key="r.fullPath" />
+        </KeepAlive>
+      </template>
+    </RouterView>
+  </el-container>
 </template>
 
 <style scoped></style>

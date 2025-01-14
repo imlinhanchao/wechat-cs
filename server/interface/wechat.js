@@ -152,6 +152,20 @@ class Wechat
       }
     });
 
+    if (results.length == 0) {
+      return await this.bot.Contact.findAll()
+      .then(contacts => contacts.map((c) => {
+        c = Wechat.contactToJson(c)
+        return {
+          id: c.id,
+          wxid: c.id,
+          avatar: c.avatarUrl,
+          nickname: c.name,
+          remark: c.alias,
+        }
+      }));
+    }
+
     return results;
   }
 

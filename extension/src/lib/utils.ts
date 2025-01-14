@@ -250,6 +250,12 @@ function getConfig () {
   return values;
 }
 
+function setConfig(key: string, value: any) {
+  let keys: string[] = Object.keys(pkg.contributes.configuration.properties);
+  const realKey = keys.find(k => k.split('.').slice(1).join('.') === key);
+  if (!realKey) { return; }
+  return vscode.workspace.getConfiguration().update(realKey, value, true);
+}
 
 export {
   showProgress,
@@ -273,5 +279,6 @@ export {
   replaceText,
   goToLine,
   hoverText,
-  getConfig
+  getConfig,
+  setConfig,
 };

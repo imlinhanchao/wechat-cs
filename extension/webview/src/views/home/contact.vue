@@ -36,7 +36,7 @@ watch(
 );
 
 async function init(contact: IContact) {
-  if (!contact.msgs?.length)
+  if ((contact.msgs?.length || 0) < 30)
     await invoke('history', { id: props.contact.wxid, count: 100, index: 0 }).then((data) => {
       data.reverse();
       contact.msgs = data;
@@ -46,7 +46,7 @@ async function init(contact: IContact) {
 
 function refresh(contact: IContact) {
   nextTick(() => footerRef.value.scrollIntoView(true));
-  contact.msgs.forEach((m) => {
+  contact.msgs?.forEach((m) => {
     m.isReaded = true;
   });
 }

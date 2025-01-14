@@ -1,7 +1,8 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useMessage } from '@/hooks/useMessage';
 import { computed, nextTick, ref } from 'vue';
 import ContactView from './contact.vue';
+import Icon from '@/components/Icon';
 
 const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
@@ -45,6 +46,14 @@ invoke('contacts').then((data) => {
   contacts.value = data;
 });
 
+const blocks = ref<string[]>([]);
+invoke('blocks').then((data) => {
+  blocks.value = data;
+});
+addListener('blocks', (data) => {
+  blocks.value = data;
+});
+
 const currentId = ref<string>();
 const currentContact = computed(() => {
   return contacts.value.find((c: IContact) => c.id === currentId.value);
@@ -70,21 +79,34 @@ function switchContact(id: string) {
         <el-main>
           <template v-for="c in contacts" :key="c.id">
             <section
-              class="flex space-x-3 items-center py-1 px-1 border-b border-gray-800 cursor-pointer truncate"
+              class="flex space-x-3 items-center py-1 px-1 border-b border-gray-800 cursor-pointer truncate group"
               @click="switchContact(c.id)"
               :class="{ 'text-[#e5d815] font-bold': currentContact && currentContact.id === c.id }"
             >
               <!-- <el-avatar :size="16" :src="c.avatarUrl" /> -->
-              <section class="truncate flex space-x-2">
-                <span class="truncate">{{ c.remark || c.nickname }}</span>
-                <span class="text-sm text-gray-700" v-if="c.remark && c.remark != c.nickname">
-                  {{ c.nickname }}
-                </span>
-                <span
-                  v-if="c.msgs?.filter((m) => m.type && !m.isReaded).length"
-                  class="bg-[#cd3131] inline-block px-1 text-black font-bold rounded-full text-xs"
-                  >{{ c.msgs?.filter((m) => m.type && !m.isReaded).length || 0 }}</span
-                >
+              <section class="truncate flex space-x-2 justify-between w-full">
+                <section class="truncate">
+                  <span class="truncate">{{ c.remark || c.nickname }}</span>
+                  <span class="text-sm text-gray-700" v-if="c.remark && c.remark != c.nickname">
+                    {{ c.nickname }}
+                  </span>
+                </section>
+                <section class="flex space-x-2 items-center">
+                  <Icon
+                    :class="{ '!inline': blocks.includes(c.wxid) }"
+                    class="text-gray-800 hidden group-hover:inline hover:text-gray-500"
+                    icon="bxs:bell-off"
+                    @click.stop="postMsg('block', c.wxid)"
+                  />
+                  <span
+                    v-if="
+                      c.msgs?.filter((m) => m.type && !m.isReaded).length &&
+                      !blocks.includes(c.wxid)
+                    "
+                    class="bg-[#cd3131] inline-block px-1 text-black font-bold rounded-full text-xs"
+                    >{{ c.msgs?.filter((m) => m.type && !m.isReaded).length || 0 }}</span
+                  >
+                </section>
               </section>
             </section>
           </template>

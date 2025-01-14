@@ -13,6 +13,8 @@ import router from './router';
 window.vscode =
   window.vscode || (window.acquireVsCodeApi ? window.acquireVsCodeApi() : window.parent);
 
+console.log('loaded wechaty');
+
 const app = createApp(App);
 
 app.use(createPinia());

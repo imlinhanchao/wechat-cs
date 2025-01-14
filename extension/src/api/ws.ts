@@ -1,6 +1,17 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { getConfig } from "../lib/utils";
 import WS from 'ws';
+import { HttpProxyAgent } from "http-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
+
+class WebSocket extends WS {
+  constructor(url: string, protocols?: string | string[]) {
+    let agent = undefined;
+    const { proxy } = getConfig();
+    if (proxy) agent = url.startsWith('ws://') ? new HttpProxyAgent(proxy) : new HttpsProxyAgent(proxy);
+    super(url, protocols, { agent });
+  }
+}
 
 export class ChatWs {
   rws: ReconnectingWebSocket;
@@ -10,7 +21,7 @@ export class ChatWs {
     const { websocket } = getConfig();
     this.rws = new ReconnectingWebSocket(`${websocket}?token=${token}`, [], {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      WebSocket: WS,
+      WebSocket,
       connectionTimeout: 10000
     });
 

@@ -10,13 +10,14 @@ defineProps<{
     <span v-if="msg.type == 'text'">{{ msg.data }}</span>
     <img
       :src="`${config.server}/emoji?url=${encodeURIComponent(msg.data)}`"
-      v-if="msg.type == 'emoji'"
+      v-else-if="msg.type == 'emoji'"
       class="max-w-20px !inline"
     />
     <img
       :src="`${config.server}/emoji?url=${encodeURIComponent(msg.data)}`"
-      v-if="msg.type == 'image'"
+      v-else-if="msg.type == 'image'"
       class="max-w-20px !inline"
     />
+    <span v-else>[{{ msg.type }}消息]</span>
   </section>
 </template>
