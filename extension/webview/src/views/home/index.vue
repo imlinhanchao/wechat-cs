@@ -8,8 +8,7 @@ const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
 addListener('connect', (d: IMessage) => {
   if (!d.type) return;
-  console.log(d);
-  if (d.isRoom) {
+  {
     const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
     if (!contact)
       contacts.value.unshift({
