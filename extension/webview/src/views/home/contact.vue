@@ -57,12 +57,12 @@ defineExpose({ init, refresh });
 <template>
   <el-container>
     <el-main class="!p-2" ref="mainRef">
-      <section
-        v-for="m in contact.msgs"
-        :key="m.id"
-        :class="{ 'font-bold': m.from.id == me && m.type }"
-      >
-        <span class="text-[#12bc79]" v-if="contact.wxid.endsWith('@chatroom')">
+      <section v-for="m in contact.msgs" :key="m.id">
+        <span
+          class="text-[#12bc79]"
+          v-if="contact.wxid.endsWith('@chatroom')"
+          :class="{ 'font-bold text-[#3b8eea]': m.from.id == me && m.type }"
+        >
           [{{ m.from.name }}]:
         </span>
         <span v-else-if="m.from.id != me && m.type" class="text-[#1fd18b]">>&nbsp;</span>
