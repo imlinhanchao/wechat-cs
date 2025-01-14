@@ -55,6 +55,10 @@ export class PanelProvider extends WebView implements vscode.WebviewViewProvider
       setConfig('blocks', blocks);
       return;
     }
+    if (message.command === 'blocks') {
+      this.response('blocks', getConfig().blocks);
+      return;
+    }
     if (message.command === 'connect') {
       this.chat.connect((data: any) => this.response('connect', data));
       return;

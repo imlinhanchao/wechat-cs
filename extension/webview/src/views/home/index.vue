@@ -48,6 +48,7 @@ invoke('contacts').then((data) => {
 const blocks = ref<string[]>([]);
 invoke('blocks').then((data) => {
   blocks.value = data;
+  console.info('block user:', data);
 });
 addListener('blocks', (data) => {
   blocks.value = data;
