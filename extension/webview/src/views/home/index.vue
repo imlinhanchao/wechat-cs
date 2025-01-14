@@ -23,7 +23,7 @@ addListener('connect', (d: IMessage) => {
   }
   const contactIndex = contacts.value.findIndex((c: IContact) => c.wxid === d.in.id);
   const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
-  if (contactIndex > 0) {
+  if (contactIndex > 0 && !blocks.value.includes(contact?.wxid || '')) {
     contacts.value.unshift(contacts.value.splice(contactIndex, 1)[0]);
   }
   if (!contact) return;
