@@ -31,6 +31,9 @@ class Wechat
   constructor(bot, wss) {
     this.bot = bot;
     this.wss = wss;
+    this.info().then(info => {
+      if (info.data) this.me = info.data
+    });
   }
 
   async send({ text, ...params}) {
@@ -55,11 +58,12 @@ class Wechat
         province: info.province,
         city: info.city,
         self: true,
-        id: contact.wxid
+        id: this.me.wxid,
       },
       in: room || await Wechat.contactToJson(contact),
       isRoom: !!room,
       self: true,
+      date: new Date(),
     });
 
     setTimeout(() => {

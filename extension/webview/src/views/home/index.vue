@@ -118,6 +118,7 @@ function switchContact(id: string) {
         v-if="currentContact"
         :contact="currentContact"
         :key="currentContact.wxid"
+        :me="info?.wxid"
       />
     </el-main>
   </el-container>

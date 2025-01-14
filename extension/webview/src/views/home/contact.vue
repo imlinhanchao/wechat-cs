@@ -6,6 +6,7 @@ import Msg from './components/msg.vue';
 
 const props = defineProps<{
   contact: IContact;
+  me?: string;
 }>();
 
 const message = ref<string>('');
@@ -56,12 +57,16 @@ defineExpose({ init, refresh });
 <template>
   <el-container>
     <el-main class="!p-2" ref="mainRef">
-      <section v-for="m in contact.msgs" :key="m.id" :class="{ 'font-bold': m.self }">
+      <section
+        v-for="m in contact.msgs"
+        :key="m.id"
+        :class="{ 'font-bold': m.from.id == me && m.type }"
+      >
         <span class="text-[#12bc79]" v-if="contact.wxid.endsWith('@chatroom')">
           [{{ m.from.name }}]:
         </span>
-        <span v-else-if="!m.from.self && m.type" class="text-[#1fd18b]">>&nbsp;</span>
-        <span v-else-if="m.from.self && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
+        <span v-else-if="m.from.id != me && m.type" class="text-[#1fd18b]">>&nbsp;</span>
+        <span v-else-if="m.from.id == me && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
         <Msg :msg="m" :config="config" />
       </section>
       <section ref="footerRef"></section>
