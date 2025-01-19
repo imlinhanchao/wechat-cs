@@ -1,9 +1,10 @@
 # Change Log
 
-All notable changes to the "wechaty" extension will be documented in this file.
+## [0.0.4] - 2025-01-19
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+- 修正引用消息无法显示问题;
+- 添加图片查看功能;
 
-## [Unreleased]
+## [0.0.3] - 2025-01-14
 
-- Initial release
+- 完成初版
