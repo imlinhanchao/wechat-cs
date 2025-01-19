@@ -2,13 +2,14 @@ import vscode from 'vscode';
 import { IMessage, WebView } from "../lib/webview";
 import { getConfig, prompt, setConfig } from '../lib/utils';
 import { Chat } from '../api/chat';
-import path from 'path';
+import { PreviewWebview } from './preview';
 
 export class PanelProvider extends WebView implements vscode.WebviewViewProvider {
 	public static readonly viewType = 'wechaty.panel';
 	private _view?: vscode.WebviewView;
   private chat: any;
   private _extensionPath: string;
+  private _preview?: PreviewWebview;
 
   constructor(context: vscode.ExtensionContext) {
     super(context);
@@ -63,14 +64,21 @@ export class PanelProvider extends WebView implements vscode.WebviewViewProvider
       this.chat.connect((data: any) => this.response('connect', data));
       return;
     }
-    if (this.chat[message.command]) {
-      if (this.chat[message.command] instanceof Function) {
-        const rsp = await this.chat[message.command](message.data);
-        message.response?.(rsp);
+    if (message.command === 'preview') {
+      if (this._preview && this._preview.panel) {
+        this._preview.addImage(message.data.images[0]);
       } else {
-        message.response?.(this.chat[message.command]);
+        this._preview = new PreviewWebview(this.context, message.data.images);
       }
       return;
+    }
+    const keys = Object.keys(this.chat);
+    const call = this.chat[message.command];
+    if (call instanceof Function) {
+      const rsp = await this.chat[message.command](message.data);
+      message.response?.(rsp);
+    } else if (call !== undefined) {
+      message.response?.(call);
     }
   }
 }

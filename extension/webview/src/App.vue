@@ -2,6 +2,7 @@
 import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useMessage } from '@/hooks/useMessage';
 import { onMounted } from 'vue';
+import { useEventListener } from './hooks/useEventListener';
 
 const router = useRouter();
 const { addListener, postMsg, invoke } = useMessage();
@@ -12,10 +13,21 @@ postMsg('ready');
 
 const route = useRoute();
 onMounted(async () => {
-  if (route.name != 'login' && (await invoke('isLogin')) === false) {
+  const isLogin = await invoke('isLogin');
+  if (route.name != 'login' && !isLogin) {
     router.push('/login');
   }
   console.info('route:', route);
+});
+useEventListener({
+  el: document.body,
+  name: 'click',
+  listener: (e) => {
+    const target = e.target as HTMLElement;
+    if (target.nodeName.toLowerCase() == 'img') {
+      postMsg('preview', { images: [(target as HTMLImageElement).src] });
+    }
+  }
 });
 </script>
 

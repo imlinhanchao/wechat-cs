@@ -1,6 +1,7 @@
 import { createRouter, createMemoryHistory } from 'vue-router';
 import HomeView from '../views/home/index.vue';
 import LoginView from '../views/login/index.vue';
+import PreviewView from '../views/preview/index.vue';
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
+    },
+    {
+      path: '/preview',
+      name: 'preview',
+      component: PreviewView
     }
   ]
 });
