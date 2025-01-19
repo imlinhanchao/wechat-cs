@@ -93,7 +93,7 @@ const onMessage = async (msg) => {
   }
   else if (msg.type() === bot.Message.Type.Quote) {
     const data = bot.Message.getXmlToJson(msg.text());
-    wss.send({ type: bot.Message.Type.Emoji, data: { 
+    wss.send({ type: bot.Message.Type.Quote, data: { 
       content: data.msg.appmsg.title, 
       refermsg: data.msg.appmsg.refermsg 
     }, ...base });

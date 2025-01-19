@@ -75,7 +75,7 @@ async function syncMessage(contacts) {
     const contact = contacts[i];
     const user = contact.UserName || contact.wxid;
     const nick = contact.NickName || contact.Remark || contact.nickname ;
-    let page = 1, size = 500;
+    let page = 1, size = 100;
     console.info(`开始同步`, nick, `消息${i}`);
     let messages = await bak.getMessage({ strUsrName: user, page, size }).then(m => m.msgs);
     await Wechat.saveMessagesFromBak(messages, user, nick);

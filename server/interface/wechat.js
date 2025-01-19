@@ -236,6 +236,10 @@ class Wechat
       if (!recvTypes.includes(msg.type?.toLowerCase()) || !msg.from.id) {
         return false;
       }
+      if (msg.data?.refermsg.msgsource) delete msg.data?.refermsg.msgsource
+      if (await MsgModel.findOne({ where: { msgId: msg.id } })) {
+        return false;
+      }
       await MsgModel.create({
         msgId: msg.id,
         from: msg.in.id,
@@ -268,14 +272,29 @@ class Wechat
   static async saveMessagesFromBak(msgs, source, sourceName) {
     try {
       if (!msgs?.length) return true;
-      const typeMap = {'1': 'text', '3': 'image', '34': 'voice', '43': 'video', '47': 'emoji', '49': 'quote', '106': 'file'};
+      const typeMap = {'1': 'text', '3': 'image', '34': 'voice', '43': 'video', '47': 'emoji', '106': 'quote', '55': 'file'};
+      function quoteMsg({msg}) {
+        if (msg.appmsg?.refermsg.msgsource) delete msg.appmsg?.refermsg.msgsource
+        return msg && JSON.stringify({
+          content: msg.appmsg?.title,
+          refermsg: msg.appmsg?.refermsg
+        })
+      }
+      function getContent(msg) {
+        if (msg.Type == 47) {
+          return getThumbFromStringContent(msg.StrContent);
+        }
+        if (msg.Type + msg.SubType == 106) {
+          return quoteMsg(msg.compress_content);
+        }
+      }
       await MsgModel.bulkCreate(msgs.map(msg => ({
         msgId: msg.MsgSvrIDStr,
         from: source,
         fromName: sourceName,
         talkerId: msg.WxId || (msg.IsSender && !msg.StrTalker.endsWith('@chatroom') ? msg.StrTalker : ''),
         talkerName: msg.Remark || msg.NickName || '',
-        content: msg.Image || msg.Thumb || (msg.type == 47 || msg.StrContent.includes('<emoji') ? getThumbFromStringContent(msg.StrContent) : msg.StrContent) || '[未知消息]',
+        content: getContent(msg) || msg.Image || msg.Thumb || msg.StrContent || '[未知消息]',
         type: msg.Type + msg.SubType,
         msg_type: typeMap[(msg.Type + msg.SubType).toString()] || 'text',
         chat_time: msg.CreateTime,
