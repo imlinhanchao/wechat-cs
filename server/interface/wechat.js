@@ -52,7 +52,7 @@ class Wechat {
     return {
       code: 200,
       message: '发送成功',
-      data: this._afterSend(contact, msg, url),
+      data: this._afterSend(contact, msg, url, this.bot.Message.Type.Image),
     }
   }
 
@@ -69,20 +69,19 @@ class Wechat {
       message: '发送成功',
       data: this._afterSend(contact, msg, {
         md5, size, url
-      }),
+      }, this.bot.Message.Type.Emoji),
     }
   }
 
   async send ({ text, ...params }) {
     const contact = await this._queryTarget(params);
     const msg = await contact.say(text);
-    const info = this.me;
     Wechat.msgList.push(msg);
 
     return {
       code: 200,
       message: '发送成功',
-      data: this._afterSend(contact, msg, text),
+      data: this._afterSend(contact, msg, text, this.bot.Message.Type.Text),
     }
   }
 
@@ -341,15 +340,15 @@ class Wechat {
     }
   }
 
-  _afterSend(contact, msg, data) {
+  _afterSend(contact, msg, data, type) {
     const info = this.me;
     let room = null;
     if (contact.chatroomId) {
       room = Wechat.roomToJson(contact)
     }
     this.wss.send({
-      type: msg.type(),
-      id: msg.id,
+      type: type,
+      id: msg.newMsgId.toString(),
       data,
       from: {
         alias: info.nickName,
