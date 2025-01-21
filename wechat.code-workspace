@@ -12,6 +12,7 @@
 	],
   "settings": {
     "typescript.tsc.autoDetect": "off",
-		"typescript.tsdk": "./extension/webview/node_modules/typescript/lib"
+    "typescript.tsdk": "./extension/webview/node_modules/typescript/lib",
+    "GitCommitPlugin.ShowEmoji": true
   }
 }

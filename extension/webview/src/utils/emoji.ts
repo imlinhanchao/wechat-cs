@@ -109,3 +109,12 @@ export const defaultEmojis = [
   '心碎',
   '晕'
 ];
+
+export function fillEmoji(text: string) {
+  return text.replace(/\[([^\[\]]+)\]/g, (match, key) => {
+    if (defaultEmojis.includes(key)) {
+      return `<img src="./emoji/${key}.png" alt="${key}" class="emoji" />`;
+    }
+    return match;
+  });
+}

@@ -3,6 +3,7 @@ import { nextTick, ref, watch } from 'vue';
 // import Icon from '@/components/Icon';
 import { useMessage } from '@/hooks/useMessage';
 import Msg from './components/msg.vue';
+import MsgBox from './components/msgbox.vue';
 
 const props = defineProps<{
   contact: IContact;
@@ -72,11 +73,7 @@ defineExpose({ init, refresh });
       <section ref="footerRef"></section>
     </el-main>
     <el-footer class="!p-0" height="auto">
-      <el-input v-model="message" clearable @keydown.enter="send" autofocus>
-        <template #prefix>
-          <span class="text-[#29b8db] font-bold">{{ contact.nickname }}</span>
-        </template>
-      </el-input>
+      <MsgBox :nickname="contact.nickname" @send="send" />
     </el-footer>
   </el-container>
 </template>

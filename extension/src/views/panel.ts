@@ -72,10 +72,12 @@ export class PanelProvider extends WebView implements vscode.WebviewViewProvider
       }
       return;
     }
-    const keys = Object.keys(this.chat);
     const call = this.chat[message.command];
     if (call instanceof Function) {
       const rsp = await this.chat[message.command](message.data);
+      if (!rsp && !this.chat.isLogin) {
+        this.response('path', '/login');
+      }
       message.response?.(rsp);
     } else if (call !== undefined) {
       message.response?.(call);

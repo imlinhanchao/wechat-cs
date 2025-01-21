@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { fillEmoji } from '@/utils/emoji';
 
 const props = defineProps<{
   msg: IMessage;
@@ -7,7 +8,7 @@ const props = defineProps<{
 }>();
 
 const data = computed(() => {
-  return props.msg.type == 'quote' && typeof props.msg.data == 'string'
+  return ['quote', 'emoji'].includes(props.msg.type) && typeof props.msg.data == 'string'
     ? JSON.parse(props.msg.data)
     : props.msg.data;
 });
@@ -15,9 +16,12 @@ const data = computed(() => {
 
 <template>
   <section class="inline-flex" :data-type="msg.type">
-    <span v-if="msg.type == 'text'">{{ msg.data }}</span>
+    <span v-if="msg.type == 'text'">
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <span v-html="fillEmoji(msg.data)"></span>
+    </span>
     <img
-      :src="`${config.server}/emoji?url=${encodeURIComponent(msg.data)}`"
+      :src="`${config.server}/emoji?url=${encodeURIComponent(data.url)}`"
       v-else-if="msg.type == 'emoji'"
       class="max-w-20px !inline"
     />
@@ -27,14 +31,17 @@ const data = computed(() => {
       class="max-w-20px !inline"
     />
     <template v-else-if="msg.type == 'quote'">
-      <span>{{ data.content }}</span> <br />
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <span v-html="fillEmoji(data.content)"></span> <br />
     </template>
     <span v-else>[{{ msg.type }}消息]</span>
   </section>
   <template v-if="msg.type == 'quote'">
     <br />
-    <span class="bg-dark-400 inline-block p-1 px-2 rounded text-gray-500 truncate max-w-[100%]"
-      >[{{ data.refermsg?.displayname }}]: {{ data.refermsg?.content }}</span
-    >
+    <span class="bg-dark-400 inline-block p-1 px-2 rounded text-gray-500 truncate max-w-[100%]">
+      <b>[{{ data.refermsg?.displayname }}]:</b>
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <span v-html="fillEmoji(data.refermsg?.content)"></span>
+    </span>
   </template>
 </template>
