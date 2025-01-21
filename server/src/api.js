@@ -1,7 +1,21 @@
+const path = require('path');
 const { User } = require('./db');
 const Wechat = require('../interface/wechat');
 const Bak = require('../interface/bak');
 const crypto = require('crypto');
+const multer = require('@koa/multer');
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		cb(null, path.join(process.cwd(), 'static', 'uploads'))
+	},
+	// 设置文件名
+	filename: (req, file, cb) => {
+		cb(null, Date.now() + path.extname(file.originalname))
+	}
+})
+const upload = multer({
+  storage
+});
 
 function createRouter (bot, router, wss) {
   const user = new User();
@@ -61,7 +75,7 @@ function createRouter (bot, router, wss) {
       ctx.redirect(`${user.config.url}/image?img_path=${url}&session_id=1`);
       return;
     }
-    if (url.startsWith('./img')) {
+    if (!url.startsWith('http')) {
       ctx.redirect(url);
       return;
     }
@@ -94,11 +108,11 @@ function createRouter (bot, router, wss) {
   });
 
   function loadRouter(instance, path) {
-    router.all(`/${path}/:call`, async (ctx, next) => {
+    router.all(`/${path}/:call`, upload.fields([{ name: 'file' }]), async (ctx, next) => {
       if (!initCheck(ctx)) return;
-      if (instance[ctx.params.call]) {
+      if (!ctx.params.call.startsWith('_') && instance[ctx.params.call]) {
         try {
-          ctx.body = await instance[ctx.params.call]({ ...ctx.request.body, ...ctx.request.query });
+          ctx.body = await instance[ctx.params.call]({ ...ctx.request.body, ...ctx.request.query, ...ctx.request.files });
         } catch (error) {
           ctx.body = {
             code: 500,

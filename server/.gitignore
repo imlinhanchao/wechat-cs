@@ -4,4 +4,5 @@ config.json
 ds.json
 static/file
 static/img
+static/uploads
 contacts.json

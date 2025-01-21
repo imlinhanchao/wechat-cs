@@ -1,9 +1,14 @@
+const {
+  Filebox
+} = require("gewechaty");
 const jsdom = require("jsdom");
 const { Op } = require('sequelize');
 const { sequelize } = require('../models/db');
 const ChatRoomModel = require('../models').chatroom;
 const ContactModel = require('../models').contact;
 const MsgModel = require('../models').msg;
+const EmojiModel = require('../models').emoji;
+const path = require('path');
 
 const parseXml = (xmlString) => {
   return new jsdom.JSDOM(xmlString);
@@ -11,21 +16,24 @@ const parseXml = (xmlString) => {
 
 const getThumbFromStringContent = (content) => {
   try {
-      let dom = parseXml(content).window.document;
-      const emoji = dom.querySelector('emoji');
-      if (emoji) {
-          return emoji.getAttribute('cdnurl');
-      }
-      return '';
+    let dom = parseXml(content).window.document;
+    const emoji = dom.querySelector('emoji');
+    if (emoji) {
+      return JSON.stringify({
+        url: emoji.getAttribute('cdnurl'),
+        md5: emoji.getAttribute('md5'),
+        size: emoji.getAttribute('len'),
+      })
+    }
+    return '';
   } catch (e) {
-      console.error(e)
+    console.error(e)
   }
   return '';
 }
 
 
-class Wechat 
-{
+class Wechat {
   static msgList = [];
 
   constructor(bot, wss) {
@@ -36,48 +44,49 @@ class Wechat
     });
   }
 
-  async send({ text, ...params}) {
+  async sendImg({ file, ...params }) {
     const contact = await this._queryTarget(params);
-    const msg = await contact.say(text);
-    const info = await this.bot.info();
-    Wechat.msgList.push(msg);
-    let room = false;
-    if (contact.chatroomId) {
-      room = await Wechat.roomToJson(contact)
-    }
-    this.wss.send({
-      type: this.bot.Message.Type.Text,
-      id: msg.newMsgId.toString(),
-      data: text,
-      from: {
-        alias: info.nickName,
-        avatarUrl: info.bigHeadImgUrl,
-        name: info.nickName,
-        type: 1,
-        gender: info.sex,
-        province: info.province,
-        city: info.city,
-        self: true,
-        id: this.me.wxid,
-      },
-      in: room || await Wechat.contactToJson(contact),
-      isRoom: !!room,
-      self: true,
-      date: new Date(),
-    });
-
-    setTimeout(() => {
-      Wechat.msgList.splice(Wechat.msgList.indexOf(msg), 1);
-    }, 1000 * 60 * 5);
+    const url = path.relative(path.join(process.cwd(), 'static'), file[0].path);
+    const msg = await contact.say(Filebox.fromUrl(`${this.bot.proxy}/${url}`));
 
     return {
       code: 200,
       message: '发送成功',
-      data: msg,
+      data: this._afterSend(contact, msg, url),
     }
   }
 
-  rooms() {
+  async sendEmoji ({ md5, size, url, ...params }) {
+    const contact = await this._queryTarget(params);
+    const emoji = new Emoji({
+      emojiMd5: md5,
+      emojiSize: size,
+    });
+    const msg = contact.say(emoji);
+
+    return {
+      code: 200,
+      message: '发送成功',
+      data: this._afterSend(contact, msg, {
+        md5, size, url
+      }),
+    }
+  }
+
+  async send ({ text, ...params }) {
+    const contact = await this._queryTarget(params);
+    const msg = await contact.say(text);
+    const info = this.me;
+    Wechat.msgList.push(msg);
+
+    return {
+      code: 200,
+      message: '发送成功',
+      data: this._afterSend(contact, msg, text),
+    }
+  }
+
+  rooms () {
     const rooms = this.bot.db.findAllRooms();
     return {
       code: 200,
@@ -85,7 +94,7 @@ class Wechat
     }
   }
 
-  async contacts() {
+  async contacts () {
     const contacts = await this.bot.Contact.findAll();
     return {
       code: 200,
@@ -93,7 +102,7 @@ class Wechat
     }
   }
 
-  async contact(query) {
+  async contact (query) {
     const contact = await this.bot.Contact.find(query);
     return {
       code: 200,
@@ -101,8 +110,8 @@ class Wechat
     }
   }
 
-  async revoke(body) {
-    const msg = Wechat.msgList.find(m => m.newMsgId === body.id);
+  async revoke (body) {
+    const msg = Wechat.msgList.find(m => m.newMsgId.toString() === body.id);
     if (!msg) {
       return {
         code: 400,
@@ -116,28 +125,28 @@ class Wechat
     }
   }
 
-  async info() {
+  async info () {
     return {
       code: 200,
       data: await this.bot.info()
     }
   }
 
-  async qrcode() {
+  async qrcode () {
     return {
       code: 200,
       data: await this.bot.qrcode()
     }
   }
 
-  async near(query) {
+  async near (query) {
     return {
       code: 200,
       data: await this.getNearContact(query)
     }
   }
 
-  async getNearContact({ count = 20, index = 0 }) {
+  async getNearContact ({ count = 20, index = 0 }) {
     const query = `
       SELECT id, wxid, nickname, avatar, remark, last_chat_time, create_time, update_time
       FROM wx.wx_contact
@@ -158,22 +167,22 @@ class Wechat
 
     if (results.length == 0) {
       return await this.bot.Contact.findAll()
-      .then(contacts => contacts.map((c) => {
-        c = Wechat.contactToJson(c)
-        return {
-          id: c.id,
-          wxid: c.id,
-          avatar: c.avatarUrl,
-          nickname: c.name,
-          remark: c.alias,
-        }
-      }));
+        .then(contacts => contacts.map((c) => {
+          c = Wechat.contactToJson(c)
+          return {
+            id: c.id,
+            wxid: c.id,
+            avatar: c.avatarUrl,
+            nickname: c.name,
+            remark: c.alias,
+          }
+        }));
     }
 
     return results;
   }
 
-  async getMessage({ id, count = 20, index = 0, chat_time = 0 }) {
+  async getMessage ({ id, count = 20, index = 0, chat_time = 0 }) {
     const messages = await MsgModel.findAll({
       where: {
         from: id,
@@ -192,7 +201,20 @@ class Wechat
     }
   }
 
-  static async saveContacts(contacts) {
+  async getEmojis ({ count = 20, index = 0 }) {
+    const emojis = await EmojiModel.findAll({
+      raw: true,
+      order: [['create_time', 'DESC']],
+      limit: Number(count),
+      offset: Number(index),
+    });
+    return {
+      code: 200,
+      data: emojis,
+    }
+  }
+
+  static async saveContacts (contacts) {
     const saved = await ContactModel.findAll({
       where: {
         wxid: {
@@ -210,7 +232,7 @@ class Wechat
     })), { returning: true });
   }
 
-  static async saveChatrooms(chatrooms) {
+  static async saveChatrooms (chatrooms) {
     const saved = await ChatRoomModel.findAll({
       where: {
         wxid: {
@@ -228,15 +250,15 @@ class Wechat
     }), { returning: true }));
   }
 
-  static async saveMessage(msg) {
+  static async saveMessage (msg) {
     try {
       const recvTypes = [
-        'file', 'voice', 'emoji', 'image', 'text', 'video', 'quote', 
+        'file', 'voice', 'emoji', 'image', 'text', 'video', 'quote',
       ]
       if (!recvTypes.includes(msg.type?.toLowerCase()) || !msg.from.id) {
         return false;
       }
-      if (msg.data?.refermsg.msgsource) delete msg.data?.refermsg.msgsource
+      if (msg.data?.refermsg?.msgsource) delete msg.data?.refermsg.msgsource
       if (await MsgModel.findOne({ where: { msgId: msg.id } })) {
         return false;
       }
@@ -252,7 +274,7 @@ class Wechat
         chat_time: msg.date.getTime() / 1000,
         source: JSON.stringify(msg.source || {}),
       });
-  
+
       if (msg.isRoom) {
         ChatRoomModel.findOne({ where: { wxid: msg.in.id } }).then(room => {
           room?.update({ last_chat_time: msg.date.getTime() / 1000 });
@@ -269,18 +291,18 @@ class Wechat
     }
   }
 
-  static async saveMessagesFromBak(msgs, source, sourceName) {
+  static async saveMessagesFromBak (msgs, source, sourceName) {
     try {
       if (!msgs?.length) return true;
-      const typeMap = {'1': 'text', '3': 'image', '34': 'voice', '43': 'video', '47': 'emoji', '106': 'quote', '55': 'file'};
-      function quoteMsg({msg}) {
+      const typeMap = { '1': 'text', '3': 'image', '34': 'voice', '43': 'video', '47': 'emoji', '106': 'quote', '55': 'file' };
+      function quoteMsg ({ msg }) {
         if (msg.appmsg?.refermsg.msgsource) delete msg.appmsg?.refermsg.msgsource
         return msg && JSON.stringify({
           content: msg.appmsg?.title,
           refermsg: msg.appmsg?.refermsg
         })
       }
-      function getContent(msg) {
+      function getContent (msg) {
         if (msg.Type == 47) {
           return getThumbFromStringContent(msg.StrContent);
         }
@@ -302,14 +324,14 @@ class Wechat
       })));
 
       if (msgs.length === 0) return true;
-  
+
       if (source.endsWith('@chatroom')) {
         ChatRoomModel.findOne({ where: { wxid: source } }).then(room => {
           room.update({ last_chat_time: msgs[0].CreateTime });
         });
       } else {
         ContactModel.findOne({ where: { wxid: source } }).then(contact => {
-          contact.update({ last_chat_time: msgs[0].CreateTime});
+          contact.update({ last_chat_time: msgs[0].CreateTime });
         });
       }
       return true;
@@ -318,8 +340,41 @@ class Wechat
       return false;
     }
   }
-  
-  _queryTarget({ id, isRoom }) {
+
+  _afterSend(contact, msg, data) {
+    const info = this.me;
+    let room = null;
+    if (contact.chatroomId) {
+      room = Wechat.roomToJson(contact)
+    }
+    this.wss.send({
+      type: msg.type(),
+      id: msg.id,
+      data,
+      from: {
+        alias: info.nickName,
+        avatarUrl: info.bigHeadImgUrl,
+        name: info.nickName,
+        gender: info.sex,
+        province: info.province,
+        city: info.city,
+        self: true,
+        id: info.wxid,
+      },
+      in: room || Wechat.contactToJson(contact),
+      isRoom: !!room,
+      self: true,
+      date: new Date(),
+    });
+
+    setTimeout(() => {
+      Wechat.msgList.splice(Wechat.msgList.indexOf(msg), 1);
+    });
+
+    return msg
+  }
+
+  _queryTarget ({ id, isRoom }) {
     if (!isRoom && !id.endsWith('@chatroom')) {
       return this.bot.Contact.find({ id });
     } else {
@@ -340,7 +395,7 @@ class Wechat
       id: contact._wxid
     }
   }
-  
+
   static roomToJson (room) {
     return {
       alias: room.name || room.remark || room.nickName,
@@ -351,7 +406,7 @@ class Wechat
       room: { ...room },
     }
   }
-  
+
 }
 
 module.exports = Wechat;

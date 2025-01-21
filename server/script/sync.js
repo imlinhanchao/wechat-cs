@@ -90,7 +90,7 @@ async function main() {
       path.join(__dirname, '..', 'contacts.json'), 
       JSON.stringify(contacts.map(c => c.UserName), null, 2)
     );
-    await syncMessage(contacts);
+    //await syncMessage(contacts);
     console.log('同步完成');
     process.exit(0);
   } catch (error) {

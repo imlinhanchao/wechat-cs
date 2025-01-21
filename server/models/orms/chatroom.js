@@ -28,7 +28,7 @@ let orm = {
 };
 let table_name = prefix + 'chatroom';
 module.exports = db.defineModel(table_name, orm, {
-    comment: '联系人表',
+    comment: '群聊表',
 });
 module.exports.db = db;
 module.exports.tb = table_name;

@@ -14,10 +14,12 @@ const WEGE_FILE_API_URL = `http://127.0.0.1:2532/download`;
 const static = path.join(process.cwd(), 'static');
 const imgStatic = path.join(static, 'img');
 const fileStatic = path.join(static, 'file');
+const uploadStatic = path.join(static, 'uploads');
 
 fs.mkdirSync(static, { recursive: true });
 fs.mkdirSync(imgStatic, { recursive: true });
 fs.mkdirSync(fileStatic, { recursive: true });
+fs.mkdirSync(uploadStatic, { recursive: true });
 
 const bot = new GeweBot({
   debug: true, // 是否开启调试模式 默认false
@@ -69,7 +71,7 @@ const onMessage = async (msg) => {
       const fileUrl = `./img/${filebox.name}`;
       filebox.toFile(filePath);
       wss.send({ type: bot.Message.Type.Image, data: fileUrl, ...base });
-    } catch(e) {
+    } catch (e) {
       wss.send({ type: bot.Message.Type.Image, data: `./default.jpg`, ...base });
     }
   }
@@ -87,18 +89,25 @@ const onMessage = async (msg) => {
     wss.send({ type: bot.Message.Type.File, data: fileUrl, ...base });
   }
   else if (msg.type() === bot.Message.Type.Emoji) {
-    //await msg.say("收到表情");
     const data = bot.Message.getXmlToJson(msg.text());
-    wss.send({ type: bot.Message.Type.Emoji, data: data.msg.emoji.cdnurl, ...base });
+    wss.send({
+      type: bot.Message.Type.Emoji, data: {
+        md5: data.msg.emoji.md5,
+        size: data.msg.emoji.len,
+        url: data.msg.emoji.cdnurl
+      }, ...base
+    });
   }
   else if (msg.type() === bot.Message.Type.Quote) {
     const data = bot.Message.getXmlToJson(msg.text());
-    wss.send({ type: bot.Message.Type.Quote, data: { 
-      content: data.msg.appmsg.title, 
-      refermsg: data.msg.appmsg.refermsg 
-    }, ...base });
+    wss.send({
+      type: bot.Message.Type.Quote, data: {
+        content: data.msg.appmsg.title,
+        refermsg: data.msg.appmsg.refermsg
+      }, ...base
+    });
   }
-  else if(msg.type && isNaN(msg.type)) {
+  else if (msg.type && isNaN(msg.type)) {
     const data = bot.Message.getXmlToJson(msg.text());
     wss.send({ type: msg.type(), data, ...base });
   }
@@ -116,7 +125,7 @@ bot.on('all', msg => { // 如需额外的处理逻辑可以监听 all 事件 该
 
 bot
   .start()
-  .then(async ({app, router}) => {
+  .then(async ({ app, router }) => {
     createRouter(bot, router, wss) // 创建路由
     app.use(router.routes()).use(router.allowedMethods());
   })
