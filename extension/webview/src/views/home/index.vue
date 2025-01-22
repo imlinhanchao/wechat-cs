@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 import { useMessage } from '@/hooks/useMessage';
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, onActivated, ref } from 'vue';
 import ContactView from './contact.vue';
 import Icon from '@/components/Icon';
+import router from '@/router';
 
 const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
 addListener('connect', (d: IMessage) => {
   if (!d.type || d.in.id.startsWith('gh_')) return;
   {
-    const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
-    if (!contact)
+    if (!contacts.value.some((c: IContact) => c.wxid === d.in.id))
       contacts.value.unshift({
         id: d.in.id,
         wxid: d.in.id,
@@ -33,26 +33,30 @@ addListener('connect', (d: IMessage) => {
     contactRef.value?.refresh(contact);
   }
 });
-postMsg('connect');
 
 const info = ref<IUser>();
-invoke('info').then((data) => {
-  info.value = data;
-});
-
 const contacts = ref<IContact[]>([]);
-invoke('contacts').then((data) => {
-  contacts.value = data;
-});
-
 const blocks = ref<string[]>([]);
-invoke('blocks').then((data) => {
-  blocks.value = data;
-  console.info('block user:', data);
-});
 addListener('blocks', (data) => {
   blocks.value = data;
 });
+
+function init() {
+  postMsg('connect');
+  invoke('blocks').then((data) => {
+    if (!data) router.replace('/login');
+    blocks.value = data;
+    console.info('block user:', data);
+  });
+  invoke('contacts').then((data) => {
+    if (!data) router.replace('/login');
+    contacts.value = data || [];
+  });
+  invoke('info').then((data) => {
+    if (!data) router.replace('/login');
+    info.value = data;
+  });
+}
 
 const currentId = ref<string>();
 const currentContact = computed(() => {
@@ -64,6 +68,12 @@ function switchContact(id: string) {
     if (currentContact.value) contactRef.value?.init(currentContact.value);
   });
 }
+
+init();
+
+onActivated(() => {
+  init();
+});
 </script>
 
 <template>

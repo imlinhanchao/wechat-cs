@@ -6,18 +6,23 @@ defineProps<{
   nickname: string;
 }>();
 const message = ref<string>('');
-const emit = defineEmits(['send']);
-
-function sendImg() {}
+const emit = defineEmits(['send', 'sendImg']);
 </script>
 <template>
   <section>
-    <el-input v-model="message" clearable @keydown.enter="emit('send', message)" autofocus>
+    <el-input
+      v-model="message"
+      clearable
+      @keydown.enter="emit('send', message, () => (message = ''))"
+      autofocus
+    >
       <template #prefix>
         <span class="text-[#29b8db] font-bold">{{ nickname }}</span>
       </template>
-      <template #append>
-        <el-button @click="sendImg" link><Icon icon="majesticons:image-plus" /></el-button>
+      <template #suffix>
+        <el-button type="primary" link @click="emit('sendImg')">
+          <Icon icon="majesticons:image-plus" />
+        </el-button>
       </template>
     </el-input>
   </section>

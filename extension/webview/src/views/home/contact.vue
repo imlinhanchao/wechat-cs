@@ -10,18 +10,22 @@ const props = defineProps<{
   me?: string;
 }>();
 
-const message = ref<string>('');
-
 const { postMsg, invoke } = useMessage();
 
-async function send() {
-  if (!message.value) return;
+async function send(message, done) {
+  if (!message) return;
   await postMsg('send', {
     id: props.contact.wxid,
-    text: message.value,
+    text: message,
     isRoom: props.contact.wxid.endsWith('@chatroom')
   });
-  message.value = '';
+  done();
+}
+
+async function sendImg() {
+  await postMsg('sendImg', {
+    id: props.contact.wxid
+  });
 }
 
 const config = ref<any>({});
@@ -64,7 +68,7 @@ defineExpose({ init, refresh });
           v-if="contact.wxid.endsWith('@chatroom')"
           :class="{ 'font-bold text-[#3b8eea]': m.from.id == me && m.type }"
         >
-          [{{ m.from.name }}]:
+          [{{ m.from.alias || m.from.name }}]:
         </span>
         <span v-else-if="m.from.id != me && m.type" class="text-[#1fd18b]">>&nbsp;</span>
         <span v-else-if="m.from.id == me && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
@@ -73,7 +77,7 @@ defineExpose({ init, refresh });
       <section ref="footerRef"></section>
     </el-main>
     <el-footer class="!p-0" height="auto">
-      <MsgBox :nickname="contact.nickname" @send="send" />
+      <MsgBox :nickname="contact.nickname" @send="send" @send-img="sendImg" />
     </el-footer>
   </el-container>
 </template>

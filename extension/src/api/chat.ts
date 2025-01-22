@@ -1,7 +1,10 @@
 import { defHttp } from "../lib/request";
 import vscode from 'vscode';
 import { ChatWs } from "./ws";
-import { getConfig } from "../lib/utils";
+import { getConfig, openFile } from "../lib/utils";
+import FormData from "form-data";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class Chat {
   token: string = '';
@@ -102,6 +105,21 @@ export class Chat {
 
   async send(params: any) {
     return defHttp.post<any>('/wechat/send', params)
+      .catch(err => {
+        vscode.window.showInformationMessage(err.message)
+        return false
+      });
+  }
+
+  async sendImg(params: any) {
+    const file = await openFile();
+    if (!file) return;
+    const form = new FormData();
+    form.append('file', fs.readFileSync(file), path.basename(file));
+    Object.keys(params).forEach(key => {
+      form.append(key, params[key]);
+    });
+    return defHttp.post<any>('/wechat/sendImg', form)
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false

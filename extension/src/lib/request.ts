@@ -3,6 +3,7 @@ import { getConfig } from './utils';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
+import FormData from "form-data";
 
 export interface RequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -23,14 +24,14 @@ export class defHttp {
     url = config.server + url + (url.includes('?') ? '&' : '?') + querystring.stringify(options.params);
     let agent = undefined;
     if (config.proxy) agent = url.startsWith('http://') ? new HttpProxyAgent(config.proxy) : new HttpsProxyAgent(config.proxy);
+    const body = options.method != 'GET' ? (options.data instanceof FormData ? options.data : JSON.stringify(options.data)) : undefined;
     return new Promise((resolve, reject) => {
       fetch(url, {
         method: options.method,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': this.token
         },
-        body: options.method != 'GET' ? JSON.stringify(options.data) : undefined,
+        body,
         agent: agent
       })
       .then(rsp => rsp.json())

@@ -52,7 +52,7 @@ class Wechat {
     return {
       code: 200,
       message: '发送成功',
-      data: this._afterSend(contact, msg, url, this.bot.Message.Type.Image),
+      data: await this._afterSend(contact, msg, url, this.bot.Message.Type.Image),
     }
   }
 
@@ -340,7 +340,7 @@ class Wechat {
     }
   }
 
-  _afterSend(contact, msg, data, type) {
+  async _afterSend(contact, msg, data, type) {
     const info = this.me;
     let room = null;
     if (contact.chatroomId) {
@@ -360,7 +360,7 @@ class Wechat {
         self: true,
         id: info.wxid,
       },
-      in: room || Wechat.contactToJson(contact),
+      in: room || await Wechat.contactToJson(contact),
       isRoom: !!room,
       self: true,
       date: new Date(),

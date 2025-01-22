@@ -2,7 +2,7 @@
   "name": "wechaty",
   "displayName": "Wechaty",
   "description": "webview sample extension",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.87.0"
   },
@@ -91,6 +91,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "form-data": "^4.0.1",
     "http-proxy-agent": "^7.0.2",
     "https-proxy-agent": "^7.0.6",
     "node-fetch": "<3.0.0",
