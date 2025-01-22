@@ -112,7 +112,11 @@ export class Chat {
   }
 
   async sendImg(params: any) {
-    const file = await openFile();
+    const file = await openFile({
+      filters: {
+        Image: ['jpg', 'jpeg', 'bmp', 'gif', 'png']
+      }
+    });
     if (!file) return;
     const form = new FormData();
     form.append('file', fs.readFileSync(file), path.basename(file));

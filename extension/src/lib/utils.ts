@@ -63,11 +63,12 @@ async function openFolder() {
   }
 }
 
-async function openFile() {
+async function openFile(options: any = {}) {
   const uris = await vscode.window.showOpenDialog({
       canSelectFiles: true,
       canSelectFolders: false,
-      canSelectMany: false
+      canSelectMany: false,
+      ...options
   });
 
   if (uris && uris.length > 0) {
