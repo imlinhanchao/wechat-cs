@@ -5,6 +5,8 @@ import * as crypto from 'crypto';
 
 // @ts-ignore
 import * as pkg from '../../package.json';
+import { spawn } from 'child_process';
+import { tmpdir } from 'os';
 
 function showProgress (message: string) {
   let show = true;
@@ -272,6 +274,100 @@ function setConfig(key: string, value: any) {
   return vscode.workspace.getConfiguration().update(realKey, value, true);
 }
 
+function getPasteImage (imagePath: string): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+      if (!imagePath) { return; }
+
+      let platform = process.platform;
+      if (platform === 'win32') {
+          // Windows
+          const scriptPath = path.join(__dirname, '..', '..', 'assets/pc.ps1');
+
+          let command = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+          let powershellExisted = fs.existsSync(command);
+          let output = '';
+          if (!powershellExisted) {
+              command = "powershell";
+          }
+
+          const powershell = spawn(command, [
+              '-noprofile',
+              '-noninteractive',
+              '-nologo',
+              '-sta',
+              '-executionpolicy', 'unrestricted',
+              '-windowstyle', 'hidden',
+              '-file', scriptPath,
+              imagePath
+          ]);
+          // the powershell can't auto exit in windows 7 .
+          let timer = setTimeout(() => powershell.kill(), 2000);
+
+          powershell.on('error', (e: any) => {
+              if (e.code === 'ENOENT') {
+                  vscode.window.showErrorMessage('The powershell command is not in you PATH environment variables. Please add it and retry.');
+              } else {
+                  vscode.window.showErrorMessage(e);
+              }
+          });
+
+          powershell.on('exit', function (code, signal) {
+              // console.debug('exit', code, signal);
+          });
+          powershell.stdout.on('data', (data) => {
+              data.toString().split('\n').forEach((d: string) => output += (d.indexOf('Active code page:') < 0 ? d + '\n' : ''));
+              clearTimeout(timer);
+              timer = setTimeout(() => powershell.kill(), 2000);
+          });
+          powershell.on('close', (code) => {
+              resolve(output.trim().split('\n').map(i => i.trim()));
+          });
+      }
+      else if (platform === 'darwin') {
+          // Mac
+          let scriptPath = path.join(__dirname, '..', '..', 'assets/mac.applescript');
+
+          let ascript = spawn('osascript', [scriptPath, imagePath]);
+          ascript.on('error', (e: any) => {
+              vscode.window.showErrorMessage(e);
+          });
+          ascript.on('exit', (code, signal) => {
+              // console.debug('exit', code, signal);
+          });
+          ascript.stdout.on('data', (data) => {
+              resolve(data.toString().trim().split('\n'));
+          });
+      } else {
+          // Linux
+
+          let scriptPath = path.join(__dirname, '..', '..', 'assets/linux.sh');
+
+          let ascript = spawn('sh', [scriptPath, imagePath]);
+          ascript.on('error', (e: any) => {
+              vscode.window.showErrorMessage(e);
+          });
+          ascript.on('exit', (code, signal) => {
+              // console.debug('exit',code,signal);
+          });
+          ascript.stdout.on('data', (data) => {
+              let result = data.toString().trim();
+              if (result === "no xclip") {
+                  vscode.window.showInformationMessage('You need to install xclip command first.');
+                  return;
+              }
+              let match = decodeURI(result).trim().match(/((\/[^\/]+)+\/[^\/]*?\.(jpg|jpeg|gif|bmp|png))/g);
+              resolve(match || []);
+          });
+      }
+  });
+}
+
+function getTmpFolder () {
+  let savePath = path.join(tmpdir(), pkg.name);
+  if (!fs.existsSync(savePath)) { fs.mkdirSync(savePath); }
+  return savePath;
+}
+
 export {
   showProgress,
   editorEdit,
@@ -297,4 +393,6 @@ export {
   hoverText,
   getConfig,
   setConfig,
+  getPasteImage,
+  getTmpFolder
 };

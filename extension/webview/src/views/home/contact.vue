@@ -4,6 +4,7 @@ import { nextTick, ref, watch } from 'vue';
 import { useMessage } from '@/hooks/useMessage';
 import Msg from './components/msg.vue';
 import MsgBox from './components/msgbox.vue';
+import { useEventListener } from '@/hooks/useEventListener';
 
 const props = defineProps<{
   contact: IContact;
@@ -56,6 +57,17 @@ function refresh(contact: IContact) {
     m.isReaded = true;
   });
 }
+
+useEventListener({
+  el: document,
+  name: 'paste',
+  listener: (e) => {
+    console.log('paste', e);
+    postMsg('pasteAndSend', {
+      id: props.contact.wxid
+    });
+  }
+});
 
 defineExpose({ init, refresh });
 </script>

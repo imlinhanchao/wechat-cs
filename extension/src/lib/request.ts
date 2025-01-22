@@ -25,11 +25,13 @@ export class defHttp {
     let agent = undefined;
     if (config.proxy) agent = url.startsWith('http://') ? new HttpProxyAgent(config.proxy) : new HttpsProxyAgent(config.proxy);
     const body = options.method != 'GET' ? (options.data instanceof FormData ? options.data : JSON.stringify(options.data)) : undefined;
+    const headers: any = typeof body == 'string' ? { 'Content-Type': 'application/json' } : {};
     return new Promise((resolve, reject) => {
       fetch(url, {
         method: options.method,
         headers: {
-          'Authorization': this.token
+          'Authorization': this.token,
+          ...headers
         },
         body,
         agent: agent

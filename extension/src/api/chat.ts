@@ -1,7 +1,7 @@
 import { defHttp } from "../lib/request";
 import vscode from 'vscode';
 import { ChatWs } from "./ws";
-import { getConfig, openFile } from "../lib/utils";
+import { getConfig, getPasteImage, getTmpFolder, openFile } from "../lib/utils";
 import FormData from "form-data";
 import * as fs from 'fs';
 import * as path from 'path';
@@ -112,7 +112,7 @@ export class Chat {
   }
 
   async sendImg(params: any) {
-    const file = await openFile({
+    const file = params.file || await openFile({
       filters: {
         Image: ['jpg', 'jpeg', 'bmp', 'gif', 'png']
       }
@@ -120,14 +120,22 @@ export class Chat {
     if (!file) return;
     const form = new FormData();
     form.append('file', fs.readFileSync(file), path.basename(file));
-    Object.keys(params).forEach(key => {
-      form.append(key, params[key]);
+    const { file: _, ...data } = params
+    Object.keys(data).forEach(key => {
+      form.append(key, data[key]);
     });
     return defHttp.post<any>('/wechat/sendImg', form)
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false
       });
+  }
+
+  async pasteAndSend(params: any) {
+    let savePath = getTmpFolder();
+    savePath = path.resolve(savePath, `pic_${new Date().getTime()}.png`);
+    let [file] = await getPasteImage(savePath);
+    return this.sendImg({ ...params, file });
   }
 
   async revoke(params: any) {
