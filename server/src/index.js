@@ -49,7 +49,7 @@ const onMessage = async (msg) => {
   }
   // 处理消息...
   const base = {
-    id: msg._msgId,
+    id: msg._newMsgId,
     from,
     in: src,
     isRoom,
@@ -102,14 +102,25 @@ const onMessage = async (msg) => {
     const data = bot.Message.getXmlToJson(msg.text());
     wss.send({
       type: bot.Message.Type.Quote, data: {
-        content: data.msg.appmsg.title,
-        refermsg: data.msg.appmsg.refermsg
+        content: data.msg.appmsg?.title,
+        refermsg: data.msg.appmsg?.refermsg
       }, ...base
     });
   }
-  else if (msg.type && isNaN(msg.type)) {
+  else if (msg._type === 10002 || msg.type() === bot.Message.Type.Revoke) {
+    const data = bot.Message.getXmlToJson(msg.text());
+    wss.send({
+      type: bot.Message.Type.Revoke, data: {
+        content: data.sysmsg.replacemsg,
+        id: data.sysmsg.revoke_climsgid.split('_')[0]
+      },
+    });
+  }
+  else if (msg.type() && isNaN(msg.type())) {
     const data = bot.Message.getXmlToJson(msg.text());
     wss.send({ type: msg.type(), data, ...base });
+  } else {
+    console.log(msg);
   }
 };
 
@@ -120,7 +131,7 @@ bot.on("message", (msg) => {
 
 
 bot.on('all', msg => { // 如需额外的处理逻辑可以监听 all 事件 该事件将返回回调地址接收到的所有原始数据
-  console.log('received all event.', msg)
+  //console.log('received all event.', msg)
 })
 
 bot

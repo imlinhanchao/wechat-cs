@@ -114,12 +114,14 @@ class Wechat {
     if (!msg) {
       return {
         code: 400,
-        message: '消息不存在',
+        data: false,
+        message: '消息已过期',
       }
     }
     await msg.revoke();
     return {
       code: 200,
+      data: true,
       message: '撤回成功',
     }
   }
@@ -368,7 +370,7 @@ class Wechat {
 
     setTimeout(() => {
       Wechat.msgList.splice(Wechat.msgList.indexOf(msg), 1);
-    });
+    }, 2 * 60000);
 
     return msg
   }
