@@ -301,7 +301,7 @@ function getPasteImage (imagePath: string): Promise<string[]> {
               imagePath
           ]);
           // the powershell can't auto exit in windows 7 .
-          let timer = setTimeout(() => powershell.kill(), 2000);
+          let timer = setTimeout(() => powershell.kill(), 10000);
 
           powershell.on('error', (e: any) => {
               if (e.code === 'ENOENT') {
