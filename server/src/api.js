@@ -72,7 +72,9 @@ function createRouter (bot, router, wss) {
   router.get('/emoji', async (ctx) => {
     const url = ctx.query.url;
     if (url.startsWith('wxid_')) {
-      ctx.redirect(`${user.config.url}/image?img_path=${url}&session_id=1`);
+      await fetch(`${user.config.url}/image?img_path=${url}&session_id=1`).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => {
+        ctx.body = Buffer.from(buffer)
+      })
       return;
     }
     if (!url.startsWith('http')) {
