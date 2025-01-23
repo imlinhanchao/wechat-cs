@@ -9,6 +9,10 @@ const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
 addListener('connect', (d: IMessage) => {
   if (!d.type || d.in.id.startsWith('gh_')) return;
+  if (d.type == 'Revoke') {
+    revokeMsg(d.data.id);
+    return;
+  }
   {
     if (!contacts.value.some((c: IContact) => c.wxid === d.in.id))
       contacts.value.unshift({
@@ -74,6 +78,20 @@ init();
 onActivated(() => {
   init();
 });
+
+function revokeMsg(id) {
+  for (let i = 0; i < contacts.value.length; i++) {
+    const contact = contacts.value[i];
+    if (contact.msgs) {
+      for (let j = 0; j < contact.msgs.length; j++) {
+        if (contact.msgs[j].id === id) {
+          contact.msgs[j].isRevoke = true;
+          return;
+        }
+      }
+    }
+  }
+}
 </script>
 
 <template>
@@ -130,6 +148,7 @@ onActivated(() => {
         :contact="currentContact"
         :key="currentContact.wxid"
         :me="info?.wxid"
+        @revoke="revokeMsg"
       />
     </el-main>
   </el-container>

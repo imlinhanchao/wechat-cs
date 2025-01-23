@@ -90,7 +90,7 @@ declare interface IWechatContact {
 declare interface IMessage {
   id: string;
   type: string;
-  data: string;
+  data: string | any;
   from: IWechatContact;
   in: IWechatContact;
   isRoom: boolean;
@@ -98,6 +98,7 @@ declare interface IMessage {
   date: string;
   age: number;
   isReaded?: boolean;
+  isRevoke?: boolean;
 }
 
 declare interface IRoomMember {
