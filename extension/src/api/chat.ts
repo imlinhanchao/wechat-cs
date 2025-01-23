@@ -135,6 +135,7 @@ export class Chat {
     let savePath = getTmpFolder();
     savePath = path.resolve(savePath, `pic_${new Date().getTime()}.png`);
     let [file] = await getPasteImage(savePath);
+    if (!file) return;
     return this.sendImg({ ...params, file });
   }
 
