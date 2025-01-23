@@ -8,9 +8,13 @@ const props = defineProps<{
 }>();
 
 const data = computed(() => {
-  return ['quote', 'emoji'].includes(props.msg.type) && typeof props.msg.data == 'string'
-    ? JSON.parse(props.msg.data)
-    : props.msg.data;
+  try {
+    return ['quote', 'emoji'].includes(props.msg.type) && typeof props.msg.data == 'string'
+      ? JSON.parse(props.msg.data)
+      : props.msg.data;
+  } catch (error) {
+    return props.msg.data;
+  }
 });
 </script>
 

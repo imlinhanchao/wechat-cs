@@ -24,7 +24,10 @@ useEventListener({
   name: 'click',
   listener: (e) => {
     const target = e.target as HTMLElement;
-    if (target.nodeName.toLowerCase() == 'img') {
+    if (
+      target.nodeName.toLowerCase() == 'img' &&
+      !Array.from(target.classList).includes('no-preview')
+    ) {
       postMsg('preview', { images: [(target as HTMLImageElement).src] });
     }
   }

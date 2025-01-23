@@ -115,7 +115,10 @@ function revokeMsg(id) {
               <section class="truncate flex space-x-2 justify-between w-full">
                 <section class="truncate">
                   <span class="truncate">{{ c.remark || c.nickname }}</span>
-                  <span class="text-sm text-gray-700" v-if="c.remark && c.remark != c.nickname">
+                  <span
+                    class="text-sm text-gray-700 ml-1"
+                    v-if="c.remark && c.remark != c.nickname"
+                  >
                     {{ c.nickname }}
                   </span>
                 </section>

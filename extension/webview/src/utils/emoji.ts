@@ -111,6 +111,7 @@ export const defaultEmojis = [
 ];
 
 export function fillEmoji(text: string) {
+  if (!text) return '[空]';
   return text.replace(/\[([^\[\]]+)\]/g, (match, key) => {
     if (defaultEmojis.includes(key)) {
       return `<img src="./emoji/${key}.png" alt="${key}" class="emoji" />`;

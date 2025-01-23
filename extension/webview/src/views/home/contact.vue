@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { nextTick, ref, watch } from 'vue';
-import { useEventListener } from '@/hooks/useEventListener';
 import { useMessage } from '@/hooks/useMessage';
 import Msg from './components/msg.vue';
 import MsgBox from './components/msgbox.vue';
@@ -23,12 +22,6 @@ async function send(message, done) {
   done();
 }
 
-async function sendImg() {
-  await postMsg('sendImg', {
-    id: props.contact.wxid
-  });
-}
-
 const config = ref<any>({});
 invoke('config').then((data) => {
   config.value = data;
@@ -42,12 +35,21 @@ watch(
   }
 );
 
+function loadMsgs(contact: IContact, index = props.contact.msgs?.length) {
+  return invoke('history', {
+    id: props.contact.wxid,
+    count: 100,
+    index
+  }).then((data) => {
+    data.reverse();
+    if (index) contact.msgs = data.concat(contact.msgs);
+    else contact.msgs = data;
+    refresh(contact);
+  });
+}
+
 async function init(contact: IContact) {
-  if ((contact.msgs?.length || 0) < 30)
-    await invoke('history', { id: props.contact.wxid, count: 100, index: 0 }).then((data) => {
-      data.reverse();
-      contact.msgs = data;
-    });
+  if ((contact.msgs?.length || 0) < 30) await loadMsgs(contact, 0);
   refresh(contact);
 }
 
@@ -57,17 +59,6 @@ function refresh(contact: IContact) {
     m.isReaded = true;
   });
 }
-
-useEventListener({
-  el: document,
-  name: 'paste',
-  listener: (e) => {
-    console.log('paste', e);
-    postMsg('pasteAndSend', {
-      id: props.contact.wxid
-    });
-  }
-});
 
 const contextRef = ref<InstanceType<typeof Contextmenu>>();
 function contextmenu(ev, msg) {
@@ -110,7 +101,15 @@ defineExpose({ init, refresh });
       </Teleport>
     </el-main>
     <el-footer class="!p-0" height="auto">
-      <MsgBox :nickname="contact.nickname" @send="send" @send-img="sendImg" />
+      <section class="flex items-center w-full">
+        <el-button
+          class="!text-[#1fd18b] !-mr-3 relative z-10"
+          link
+          icon="el-icon-refresh"
+          @click="loadMsgs(contact, 0)"
+        />
+        <MsgBox :nickname="contact.nickname" @send="send" :wxid="contact.wxid" />
+      </section>
     </el-footer>
   </el-container>
 </template>
