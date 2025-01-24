@@ -22,7 +22,7 @@ fs.mkdirSync(fileStatic, { recursive: true });
 fs.mkdirSync(uploadStatic, { recursive: true });
 
 const bot = new GeweBot({
-  debug: true, // 是否开启调试模式 默认false
+  debug: false, // 是否开启调试模式 默认false
   base_api: WEGE_BASE_API_URL, // Gewechat启动后的基础api地址base_api 默认为 `http://本机ip:2531/v2/api`
   file_api: WEGE_FILE_API_URL, // Gewechat启动后的文件api地址base_api 默认为 `http://本机ip:2532/download`,
   port: 3333, // 本地服务端口 默认3333,
@@ -36,9 +36,9 @@ const onMessage = async (msg) => {
   let src;
   const sourceId = msg.toId == msg.wxid ? msg.fromId : msg.toId;
   const isRoom = sourceId.endsWith('@chatroom');
+    let room;
   if (isRoom) {
     const chatroom = bot.db.findOneByChatroomId(sourceId);
-    let room;
     if (chatroom) room = new bot.Room(chatroom);
     else room = await msg.room();
     src = Wechat.roomToJson(room);
@@ -107,12 +107,33 @@ const onMessage = async (msg) => {
       }, ...base
     });
   }
-  else if (msg._type === 10002 || msg.type() === bot.Message.Type.Revoke) {
+  else if(msg.type() === bot.Message.Type.Pat) {
     const data = bot.Message.getXmlToJson(msg.text());
+    const pat = data.sysmsg.pat;
+    if (isRoom) {
+      pat.template = pat.template.replace(/\${(.*?)}/g, (match, key, ...params) => {
+        const contact = room.memberList.find(m => m.wxid === key);
+        if (!contact) return match;
+        return contact.displayName || contact.nickName;
+      })
+    } else {
+      pat.template = pat.template.replace(/\${(.*?)}/g, (match) => {
+        return src.alias || src.name;
+      })
+    }
+    wss.send({
+      type: bot.Message.Type.Pat, data: pat.template, ...base
+    });
+  }
+  else if ((msg._type === 10002) || msg.type() === bot.Message.Type.Revoke) {
+    const data = bot.Message.getXmlToJson(msg.text());
+    if (!data.sysmsg.revoke_climsgid) return;
+    const msgId = data.sysmsg.revoke_climsgid.split('_')[0];
+    await Wechat.revokeMsg(msgId);
     wss.send({
       type: bot.Message.Type.Revoke, data: {
         content: data.sysmsg.replacemsg,
-        id: data.sysmsg.revoke_climsgid.split('_')[0]
+        id: msgId
       },
     });
   }

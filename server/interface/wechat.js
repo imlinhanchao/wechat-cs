@@ -9,6 +9,7 @@ const ContactModel = require('../models').contact;
 const MsgModel = require('../models').msg;
 const EmojiModel = require('../models').emoji;
 const path = require('path');
+const { isReadable } = require("stream");
 
 const parseXml = (xmlString) => {
   return new jsdom.JSDOM(xmlString);
@@ -109,6 +110,28 @@ class Wechat {
     }
   }
 
+  async markRevoke(msgId) {
+    await Wechat.revokeMsg(msgId);
+    return {
+      code: 200,
+      data: true,
+      message: '标记成功',
+    }
+  }
+
+  static async revokeMsg(msgId) {
+    await MsgModel.update({ isRevoke: true }, {
+      where: {
+        msgId,
+      }
+    });
+    return {
+      code: 200,
+      data: true,
+      message: '标记成功',
+    }
+  }
+
   async revoke (body) {
     const msg = Wechat.msgList.find(m => m.newMsgId.toString() === body.id);
     if (!msg) {
@@ -119,6 +142,7 @@ class Wechat {
       }
     }
     await msg.revoke();
+    await this.markRevoke(body.id);
     return {
       code: 200,
       data: true,
@@ -144,6 +168,23 @@ class Wechat {
     return {
       code: 200,
       data: await this.getNearContact(query)
+    }
+  }
+
+  async readed(from) {
+    const { data, message } = await MsgModel.update({ isReadable: true }, {
+      where: {
+        from: from.id,
+        isReadable: false,
+      }
+    })
+      .then(() => ({ data: true, message: '更新成功', }))
+      .catch(e => ({ data: false, message: e.message, }));
+
+    return {
+      code: 200,
+      data,
+      message,
     }
   }
 
@@ -254,7 +295,7 @@ class Wechat {
   static async saveMessage (msg) {
     try {
       const recvTypes = [
-        'file', 'voice', 'emoji', 'image', 'text', 'video', 'quote',
+        'file', 'voice', 'emoji', 'image', 'text', 'video', 'quote', 'pat'
       ]
       if (!recvTypes.includes(msg.type?.toLowerCase()) || !msg.from.id) {
         return false;
@@ -274,6 +315,8 @@ class Wechat {
         type: 0,
         chat_time: msg.date.getTime() / 1000,
         source: JSON.stringify(msg.source || {}),
+        isReadable: false,
+        isRevoke: false,
       });
 
       if (msg.isRoom) {
@@ -322,6 +365,8 @@ class Wechat {
         msg_type: typeMap[(msg.Type + msg.SubType).toString()] || 'text',
         chat_time: msg.CreateTime,
         source: msg.StrContent,
+        isReadable: true,
+        isRevoke: false,
       })));
 
       if (msgs.length === 0) return true;
