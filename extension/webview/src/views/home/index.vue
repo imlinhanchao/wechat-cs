@@ -4,6 +4,7 @@ import { computed, nextTick, onActivated, ref } from 'vue';
 import ContactView from './contact.vue';
 import Icon from '@/components/Icon';
 import router from '@/router';
+import { useConfigStore } from '@/store/modules/config';
 
 const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
@@ -38,27 +39,18 @@ addListener('connect', (d: IMessage) => {
   }
 });
 
-const info = ref<IUser>();
+const { getMe: info, getConfig: config } = useConfigStore();
 const contacts = ref<IContact[]>([]);
-const blocks = ref<string[]>([]);
+const blocks = ref<string[]>(config.blocks || []);
 addListener('blocks', (data) => {
   blocks.value = data;
 });
 
 function init() {
   postMsg('connect');
-  invoke('blocks').then((data) => {
-    if (!data) router.replace('/login');
-    blocks.value = data;
-    console.info('block user:', data);
-  });
   invoke('contacts').then((data) => {
     if (!data) router.replace('/login');
     contacts.value = data || [];
-  });
-  invoke('info').then((data) => {
-    if (!data) router.replace('/login');
-    info.value = data;
   });
 }
 
@@ -150,7 +142,6 @@ function revokeMsg(id) {
         v-if="currentContact"
         :contact="currentContact"
         :key="currentContact.wxid"
-        :me="info?.wxid"
         @revoke="revokeMsg"
       />
     </el-main>

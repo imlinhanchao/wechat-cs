@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { fillEmoji } from '@/utils/emoji';
+import { useConfigStore } from '@/store/modules/config';
 
 const props = defineProps<{
   msg: IMessage;
-  config: any;
 }>();
 
 const data = computed(() => {
@@ -16,6 +16,8 @@ const data = computed(() => {
     return props.msg.data;
   }
 });
+
+const { getConfig: config } = useConfigStore();
 </script>
 
 <template>
@@ -24,15 +26,17 @@ const data = computed(() => {
       <!-- eslint-disable-next-line vue/no-v-html -->
       <span v-html="fillEmoji(msg.data)"></span>
     </span>
-    <img
-      :src="`${config.server}/emoji?url=${encodeURIComponent(data.url)}`"
+    <el-image
+      :src="`${config.server}/media?url=${encodeURIComponent(data.url)}`"
       v-else-if="msg.type == 'emoji'"
       class="max-w-20px !inline"
+      lazy
     />
-    <img
-      :src="`${config.server}/emoji?url=${encodeURIComponent(msg.data)}`"
+    <el-image
+      :src="`${config.server}/media?url=${encodeURIComponent(msg.data)}`"
       v-else-if="msg.type == 'image'"
       class="max-w-20px !inline"
+      lazy
     />
     <template v-else-if="msg.type == 'quote'">
       <!-- eslint-disable-next-line vue/no-v-html -->

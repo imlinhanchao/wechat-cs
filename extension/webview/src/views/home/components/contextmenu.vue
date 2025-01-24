@@ -28,7 +28,7 @@ useEventListener({
   }
 });
 
-const emit = defineEmits(['revoke']);
+const emit = defineEmits(['revoke', 'quote']);
 const { invoke } = useMessage();
 async function revoke() {
   showContextMenu.value = false;
@@ -43,6 +43,10 @@ async function revoke() {
     }
   });
 }
+function quote() {
+  showContextMenu.value = false;
+  emit('quote', msg.value);
+}
 </script>
 
 <template>
@@ -54,7 +58,7 @@ async function revoke() {
   >
     <ul class="w-30">
       <li v-if="msg?.isSelf" @click="revoke">撤回</li>
-      <li>引用</li>
+      <li @click="quote">引用</li>
       <li>复读一下</li>
     </ul>
   </section>

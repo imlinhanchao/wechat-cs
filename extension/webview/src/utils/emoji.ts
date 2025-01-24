@@ -1,3 +1,5 @@
+import { useMessage } from '@/hooks/useMessage';
+
 export const defaultEmojis = [
   '666',
   '吃瓜',
@@ -118,4 +120,10 @@ export function fillEmoji(text: string) {
     }
     return match;
   });
+}
+
+const { invoke } = useMessage();
+
+export function getEmojiList() {
+  return invoke('getEmojis', { count: 0 });
 }

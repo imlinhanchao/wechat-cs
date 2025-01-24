@@ -1,31 +1,37 @@
 <script lang="ts" setup>
-import { nextTick, ref, watch } from 'vue';
+import Icon from '@/components/Icon';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useMessage } from '@/hooks/useMessage';
 import Msg from './components/msg.vue';
 import MsgBox from './components/msgbox.vue';
 import Contextmenu from './components/contextmenu.vue';
+import { useConfigStore } from '@/store/modules/config';
 
 const props = defineProps<{
   contact: IContact;
-  me?: string;
 }>();
 
 const { postMsg, invoke } = useMessage();
+const { getMe: info } = useConfigStore();
+const me = computed(() => info.wxid);
 
 async function send(message, done) {
   if (!message) return;
-  await postMsg('send', {
-    id: props.contact.wxid,
-    text: message,
-    isRoom: props.contact.wxid.endsWith('@chatroom')
-  });
+  if (quoteMsg.value) {
+    await invoke('quote', {
+      id: props.contact.wxid,
+      text: message,
+      quote: quoteMsg.value
+    });
+  } else {
+    await invoke('send', {
+      id: props.contact.wxid,
+      text: message,
+      isRoom: props.contact.wxid.endsWith('@chatroom')
+    });
+  }
   done();
 }
-
-const config = ref<any>({});
-invoke('config').then((data) => {
-  config.value = data;
-});
 
 const footerRef = ref();
 watch(
@@ -69,20 +75,24 @@ function contextmenu(ev, msg) {
       y: ev.clientY
     },
     {
-      isSelf: msg.from.id == props.me,
+      isSelf: msg.from.id == me.value,
       ...msg
     }
   );
 }
 
 const emit = defineEmits(['revoke']);
+const quoteMsg = ref<IMessage | null>();
+function quote(msg: IMessage) {
+  quoteMsg.value = msg;
+}
 
 defineExpose({ init, refresh });
 </script>
 <template>
   <el-container>
     <el-main class="!p-2 relative" ref="mainRef">
-      <section v-for="m in contact.msgs" :key="m.id" @contextmenu="contextmenu($event, m)">
+      <section v-for="m in contact.msgs" :key="m.id" @contextmenu.prevent="contextmenu($event, m)">
         <template v-if="m.type != 'pat'">
           <span
             class="text-[#12bc79]"
@@ -95,23 +105,42 @@ defineExpose({ init, refresh });
           <span v-else-if="m.from.id == me && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
         </template>
         <span class="text-gray-700" v-if="m.isRevoke">[已撤回]&nbsp;</span>
-        <Msg :msg="m" :config="config" />
+        <Msg :msg="m" />
       </section>
       <section ref="footerRef"></section>
       <!--消息结尾，用于滚动定位-->
       <Teleport to="body">
-        <Contextmenu ref="contextRef" @revoke="emit('revoke', $event)" />
+        <Contextmenu ref="contextRef" @revoke="emit('revoke', $event)" @quote="quote" />
       </Teleport>
     </el-main>
     <el-footer class="!p-0" height="auto">
-      <section class="flex items-center w-full">
-        <el-button
-          class="!text-[#1fd18b] !-mr-3 relative z-10"
-          link
-          icon="el-icon-refresh"
-          @click="loadMsgs(contact, 0)"
-        />
-        <MsgBox :nickname="contact.nickname" @send="send" :wxid="contact.wxid" />
+      <section class="flex flex-col">
+        <section class="flex items-center w-full">
+          <el-button
+            class="!text-[#1fd18b] !-mr-3 relative z-10"
+            link
+            icon="el-icon-refresh"
+            @click="loadMsgs(contact, 0)"
+          />
+          <MsgBox :nickname="contact.nickname" @send="send" :wxid="contact.wxid" />
+        </section>
+        <section>
+          <el-tag
+            type="info"
+            v-if="quoteMsg"
+            closable
+            @close="quoteMsg = null"
+            :hit="true"
+            color="#1f1f1f"
+            class="!border-[#3c3c3c] ml-1"
+          >
+            <Icon icon="gridicons:quote" />
+            <span class="font-bold" v-if="contact.wxid.endsWith('@chatroom')">
+              [{{ quoteMsg.from.alias || quoteMsg.from.name }}]:
+            </span>
+            <Msg :msg="quoteMsg" />
+          </el-tag>
+        </section>
       </section>
     </el-footer>
   </el-container>

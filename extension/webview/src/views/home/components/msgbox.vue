@@ -4,6 +4,7 @@ import Icon from '@/components/Icon';
 import { useMessage } from '@/hooks/useMessage';
 import { useEventListener } from '@/hooks/useEventListener';
 import Emoji from './emoji.vue';
+import Doge from './doge.vue';
 
 const props = defineProps<{
   nickname: string;
@@ -22,6 +23,12 @@ async function sendImg() {
     imgLoading.value = false;
   });
 }
+function sendEmoji(face) {
+  invoke('sendEmoji', {
+    ...face,
+    id: props.wxid
+  });
+}
 
 useEventListener({
   el: document,
@@ -37,7 +44,7 @@ useEventListener({
 });
 </script>
 <template>
-  <section class="flex-1">
+  <section class="flex-1 flex flex-col">
     <el-input
       v-model="message"
       clearable
@@ -53,6 +60,7 @@ useEventListener({
             <Icon icon="majesticons:image-plus" v-if="!imgLoading" />
           </el-button>
           <Emoji @input="message += `[${$event}]`" />
+          <Doge @send="sendEmoji" />
         </section>
       </template>
     </el-input>

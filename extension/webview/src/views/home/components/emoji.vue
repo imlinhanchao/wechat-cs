@@ -21,7 +21,7 @@ useEventListener({
 <template>
   <Teleport to="body">
     <div
-      v-show="visible"
+      v-if="visible"
       class="absolute right-2 top-2 bottom-2.5em overflow-auto bg-[#313131] rounded-lg p-[2px] emoji-list"
     >
       <section class="grid grid-cols-10 gap-[2px]">
@@ -36,7 +36,7 @@ useEventListener({
       </section>
     </div>
   </Teleport>
-  <el-button type="primary" link @click="visible = !visible" class="emoji-btn">
-    <Icon icon="mingcute:emoji-2-fill" class="text-[#dcdcaa]" />
+  <el-button type="warning" link @click="visible = !visible" class="emoji-btn">
+    <Icon icon="mingcute:emoji-2-fill" />
   </el-button>
 </template>

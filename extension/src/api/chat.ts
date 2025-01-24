@@ -79,6 +79,14 @@ export class Chat {
       });
   }
 
+  async getEmojis(params: any) {
+    return defHttp.get<any>('/wechat/getEmojis', params)
+      .catch(err => {
+        vscode.window.showInformationMessage(err.message)
+        return false
+      });
+  }
+  
   async history(params: any) {
     return defHttp.get<any>('/wechat/getMessage', params)
       .then((res) => {
@@ -105,6 +113,14 @@ export class Chat {
 
   async send(params: any) {
     return defHttp.post<any>('/wechat/send', params)
+      .catch(err => {
+        vscode.window.showInformationMessage(err.message)
+        return false
+      });
+  }
+
+  async sendEmoji(params: any) {
+    return defHttp.post<any>('/wechat/sendEmoji', params)
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false

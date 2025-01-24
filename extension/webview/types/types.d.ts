@@ -122,3 +122,9 @@ declare interface IRoom {
   avatarImg: string;
   memberList: IRoomMember[];
 }
+
+declare interface IEmoji {
+  md5: string;
+  size: number;
+  url: string;
+}
