@@ -58,6 +58,7 @@ function refresh(contact: IContact) {
   contact.msgs?.forEach((m) => {
     m.isReaded = true;
   });
+  postMsg('readed', { id: contact.wxid });
 }
 
 const contextRef = ref<InstanceType<typeof Contextmenu>>();
@@ -82,15 +83,17 @@ defineExpose({ init, refresh });
   <el-container>
     <el-main class="!p-2 relative" ref="mainRef">
       <section v-for="m in contact.msgs" :key="m.id" @contextmenu="contextmenu($event, m)">
-        <span
-          class="text-[#12bc79]"
-          v-if="contact.wxid.endsWith('@chatroom')"
-          :class="{ 'font-bold text-[#3b8eea]': m.from.id == me && m.type }"
-        >
-          [{{ m.from.alias || m.from.name }}]:
-        </span>
-        <span v-else-if="m.from.id != me && m.type" class="text-[#1fd18b]">>&nbsp;</span>
-        <span v-else-if="m.from.id == me && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
+        <template v-if="m.type != 'pat'">
+          <span
+            class="text-[#12bc79]"
+            v-if="contact.wxid.endsWith('@chatroom')"
+            :class="{ 'font-bold text-[#3b8eea]': m.from.id == me && m.type }"
+          >
+            [{{ m.from.alias || m.from.name }}]:
+          </span>
+          <span v-else-if="m.from.id != me && m.type" class="text-[#1fd18b]">>&nbsp;</span>
+          <span v-else-if="m.from.id == me && m.type" class="text-[#3b8eea]">&lt;&nbsp;</span>
+        </template>
         <span class="text-gray-700" v-if="m.isRevoke">[已撤回]&nbsp;</span>
         <Msg :msg="m" :config="config" />
       </section>

@@ -9,7 +9,7 @@ const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
 addListener('connect', (d: IMessage) => {
   if (!d.type || d.in.id.startsWith('gh_')) return;
-  if (d.type == 'Revoke') {
+  if (d.type.toLocaleLowerCase() == 'revoke') {
     revokeMsg(d.data.id);
     return;
   }

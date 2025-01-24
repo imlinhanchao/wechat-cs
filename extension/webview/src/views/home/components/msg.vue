@@ -38,6 +38,10 @@ const data = computed(() => {
       <!-- eslint-disable-next-line vue/no-v-html -->
       <span v-html="fillEmoji(data.content)"></span> <br />
     </template>
+    <template v-else-if="msg.type == 'pat'">
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <span class="text-gray-600">{{ msg.data }}</span> <br />
+    </template>
     <span v-else>[{{ msg.type }}消息]</span>
   </section>
   <template v-if="msg.type == 'quote'">

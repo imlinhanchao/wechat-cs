@@ -139,6 +139,14 @@ export class Chat {
     return this.sendImg({ ...params, file });
   }
 
+  async readed(params: any) {
+    return defHttp.post<any>('/wechat/readed', params)
+      .catch(err => {
+        vscode.window.showInformationMessage(err.message)
+        return false
+      });
+  }
+
   async revoke(params: any) {
     return defHttp.post<any>('/wechat/revoke', params)
       .catch(err => {

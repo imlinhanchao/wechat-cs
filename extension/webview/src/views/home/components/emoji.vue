@@ -10,12 +10,12 @@ const visible = ref(false);
 <template>
   <Teleport to="body">
     <div v-show="visible" class="absolute right-2 left-60% top-2 bottom-3em overflow-auto">
-      <section class="grid grid-cols-7 gap-1">
+      <section class="grid grid-cols-10 gap-1">
         <div
           v-for="emoji in defaultEmojis"
           :key="emoji"
           @click="(emit('input', emoji), (visible = false))"
-          class="flex items-center justify-center w-10 h-10 rounded-lg bg-[#1f1f1f] cursor-pointer"
+          class="flex items-center justify-center w-5 h-5 rounded-lg bg-[#1f1f1f] cursor-pointer"
         >
           <img :src="`./emoji/${emoji}.png`" class="w-6 h-6 no-preview" />
         </div>
