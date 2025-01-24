@@ -1,5 +1,5 @@
 const {
-  Filebox
+  Filebox, Emoji
 } = require("gewechaty");
 const jsdom = require("jsdom");
 const { Op } = require('sequelize');
@@ -58,19 +58,28 @@ class Wechat {
   }
 
   async sendEmoji ({ md5, size, url, ...params }) {
-    const contact = await this._queryTarget(params);
-    const emoji = new Emoji({
-      emojiMd5: md5,
-      emojiSize: size,
-    });
-    const msg = contact.say(emoji);
-
-    return {
-      code: 200,
-      message: '发送成功',
-      data: this._afterSend(contact, msg, {
-        md5, size, url
-      }, this.bot.Message.Type.Emoji),
+    try {
+      
+      const contact = await this._queryTarget(params);
+      const emoji = new Emoji({
+        emojiMd5: md5,
+        emojiSize: size,
+      });
+      const msg = await contact.say(emoji);
+  
+      return {
+        code: 200,
+        message: '发送成功',
+        data: this._afterSend(contact, msg, {
+          md5, size, url
+        }, this.bot.Message.Type.Emoji),
+      }
+    } catch (error) {
+      return {
+        code: 500,
+        data: false,
+        message: error.message,
+      }      
     }
   }
 
@@ -247,7 +256,7 @@ class Wechat {
     const emojis = await EmojiModel.findAll({
       raw: true,
       order: [['create_time', 'DESC']],
-      limit: Number(count),
+      limit: count <= 0 ? undefined : Number(count),
       offset: Number(index),
     });
     return {

@@ -15,11 +15,13 @@ const static = path.join(process.cwd(), 'static');
 const imgStatic = path.join(static, 'img');
 const fileStatic = path.join(static, 'file');
 const uploadStatic = path.join(static, 'uploads');
+const emojidStatic = path.join(static, 'emoji');
 
 fs.mkdirSync(static, { recursive: true });
 fs.mkdirSync(imgStatic, { recursive: true });
 fs.mkdirSync(fileStatic, { recursive: true });
 fs.mkdirSync(uploadStatic, { recursive: true });
+fs.mkdirSync(emojidStatic, { recursive: true });
 
 const bot = new GeweBot({
   debug: false, // 是否开启调试模式 默认false

@@ -1,9 +1,12 @@
+const querystring = require('querystring');
 const path = require('path');
+const fs = require('fs');
 const { User } = require('./db');
 const Wechat = require('../interface/wechat');
 const Bak = require('../interface/bak');
 const crypto = require('crypto');
 const multer = require('@koa/multer');
+const { downloadFile } = require('../utils/file');
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
 		cb(null, path.join(process.cwd(), 'static', 'uploads'))
@@ -69,19 +72,37 @@ function createRouter (bot, router, wss) {
     });
   }
 
-  router.get('/emoji', async (ctx) => {
+  router.get('/media', async (ctx) => {
     const url = ctx.query.url;
     if (url.startsWith('wxid_')) {
       await fetch(`${user.config.url}/image?img_path=${url}&session_id=1`).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => {
+        ctx.set('Cache-Control', 'public, max-age=31536000');
         ctx.body = Buffer.from(buffer)
       })
       return;
     }
     if (!url.startsWith('http')) {
+      ctx.set('Cache-Control', 'public, max-age=31536000');
       ctx.redirect(url);
       return;
     }
+    if (url.includes('stodownload')) {
+      const parsedUrl = new URL(url);
+      const query = querystring.parse(parsedUrl.search.substring(1));
+      const emojiPath = path.join(process.cwd(), 'static', 'emoji', query.m);
+      if (fs.existsSync(emojiPath)) {
+        ctx.set('Cache-Control', 'public, max-age=31536000');
+        ctx.redirect(`./emoji/${query.m}`);
+        return;
+      } else {
+        await downloadFile(url, emojiPath);
+        ctx.set('Cache-Control', 'public, max-age=31536000');
+        ctx.redirect(`./emoji/${query.m}`);
+        return;
+      }
+    }
     await fetch(url).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => {
+      ctx.set('Cache-Control', 'public, max-age=31536000');
       ctx.body = Buffer.from(buffer)
     })
   })
