@@ -41,6 +41,7 @@ const onMessage = async (msg) => {
     const chatroom = bot.db.findOneByChatroomId(sourceId);
     if (chatroom) room = new bot.Room(chatroom);
     else room = await msg.room();
+    await room?.sync();
     src = Wechat.roomToJson(room);
   } else {
     const contact = await bot.Contact.find({ id: sourceId });
@@ -111,10 +112,11 @@ const onMessage = async (msg) => {
     const data = bot.Message.getXmlToJson(msg.text());
     const pat = data.sysmsg.pat;
     if (isRoom) {
+      const memberList = await room.memberAll();
       pat.template = pat.template.replace(/\${(.*?)}/g, (match, key, ...params) => {
-        const contact = room.memberList.find(m => m.wxid === key);
+        let contact = memberList.find(m => m._wxid === key);
         if (!contact) return match;
-        return contact.displayName || contact.nickName;
+        return contact._alias || contact._name;
       })
     } else {
       pat.template = pat.template.replace(/\${(.*?)}/g, (match) => {
