@@ -111,6 +111,14 @@ export class Chat {
       });
   }
 
+  async quote(params: any) {
+    return defHttp.post<any>('/wechat/quote', params)
+      .catch(err => {
+        vscode.window.showInformationMessage(err.message)
+        return false
+      });
+  }
+
   async send(params: any) {
     return defHttp.post<any>('/wechat/send', params)
       .catch(err => {

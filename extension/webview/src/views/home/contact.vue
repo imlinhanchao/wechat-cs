@@ -19,9 +19,9 @@ async function send(message, done) {
   if (!message) return;
   if (quoteMsg.value) {
     await invoke('quote', {
-      id: props.contact.wxid,
-      text: message,
-      quote: quoteMsg.value
+      wxid: props.contact.wxid,
+      title: message,
+      msgid: quoteMsg.value.id
     });
   } else {
     await invoke('send', {
