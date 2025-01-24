@@ -1,5 +1,5 @@
 const {
-  Filebox, Emoji
+  Filebox, Emoji, Message
 } = require("gewechaty");
 const jsdom = require("jsdom");
 const { Op } = require('sequelize');
@@ -45,7 +45,31 @@ class Wechat {
     });
   }
 
-  async sendImg({ file, ...params }) {
+  async quote ({ title, msgid, wxid }) {
+    try {
+      const message = new this.bot.Message({
+        Data: {
+          FromUserName: { string: '' }, ToUserName: { string: '' }, Content: { string: '' },
+          NewMsgId: msgid,
+        },
+      })
+      message.fromId = wxid;
+      return {
+        code: 200,
+        message: '发送成功',
+        data: await message.quote(title),
+      }
+    } catch (error) {
+      return {
+        code: 500,
+        data: false,
+        message: error.message,
+      }
+
+    }
+  }
+
+  async sendImg ({ file, ...params }) {
     const contact = await this._queryTarget(params);
     const url = path.relative(path.join(process.cwd(), 'static'), file[0].path);
     const msg = await contact.say(Filebox.fromUrl(`${this.bot.proxy}/${url}`));
@@ -59,14 +83,14 @@ class Wechat {
 
   async sendEmoji ({ md5, size, url, ...params }) {
     try {
-      
+
       const contact = await this._queryTarget(params);
       const emoji = new Emoji({
         emojiMd5: md5,
         emojiSize: size,
       });
       const msg = await contact.say(emoji);
-  
+
       return {
         code: 200,
         message: '发送成功',
@@ -79,7 +103,7 @@ class Wechat {
         code: 500,
         data: false,
         message: error.message,
-      }      
+      }
     }
   }
 
@@ -119,7 +143,7 @@ class Wechat {
     }
   }
 
-  async markRevoke(msgId) {
+  async markRevoke (msgId) {
     await Wechat.revokeMsg(msgId);
     return {
       code: 200,
@@ -128,7 +152,7 @@ class Wechat {
     }
   }
 
-  static async revokeMsg(msgId) {
+  static async revokeMsg (msgId) {
     await MsgModel.update({ isRevoke: true }, {
       where: {
         msgId,
@@ -180,7 +204,7 @@ class Wechat {
     }
   }
 
-  async readed(from) {
+  async readed (from) {
     const { data, message } = await MsgModel.update({ isReadable: true }, {
       where: {
         from: from.id,
@@ -396,7 +420,7 @@ class Wechat {
     }
   }
 
-  async _afterSend(contact, msg, data, type) {
+  async _afterSend (contact, msg, data, type) {
     const info = this.me;
     let room = null;
     if (contact.chatroomId) {

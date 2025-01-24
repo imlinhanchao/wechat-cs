@@ -131,7 +131,7 @@ const onMessage = async (msg) => {
   }
   else if ((msg._type === 10002) || msg.type() === bot.Message.Type.Revoke) {
     const data = bot.Message.getXmlToJson(msg.text());
-    if (!data.sysmsg.revoke_climsgid) return;
+    if (data.sysmsg.type != 'qy_revoke_msg' && msg.type() !== bot.Message.Type.Revoke) return;
     const msgId = data.sysmsg.revoke_climsgid.split('_')[0];
     await Wechat.revokeMsg(msgId);
     wss.send({
