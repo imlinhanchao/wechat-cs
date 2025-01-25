@@ -6,12 +6,12 @@ const FormData = require('form-data');
 const schedule = require('node-schedule');
 
 class Bak {
-  constructor() {
+  constructor(login) {
     this.config = null;
     const configPath = path.join(__dirname, '..', 'config.json');
     if (fs.existsSync(configPath)) {
       this.config = JSON.parse(fs.readFileSync(configPath).toString());
-      if (!this.config.token) this.loginWait = this.login();
+      if (!this.config.token || login) this.loginWait = this.login();
     } else {
       this.loginWait = Promise.resolve(true);
     }
@@ -94,7 +94,7 @@ class Bak {
 
   static SyncSchedule() {
     if (Bak.syncJob) return;
-    const bak = new Bak();
+    const bak = new Bak(true);
     console.log('已创建云朵备份同步任务排程');
     Bak.syncJob = schedule.scheduleJob('0 0 8 * * *', async () => {
       await bak.loginWait;

@@ -43,7 +43,7 @@ const onMessage = async (msg) => {
     const chatroom = bot.db.findOneByChatroomId(sourceId);
     if (chatroom) room = new bot.Room(chatroom);
     else room = await msg.room();
-    await room?.sync();
+    await room?.sync?.();
     src = Wechat.roomToJson(room);
   } else {
     const contact = await bot.Contact.find({ id: sourceId });
@@ -138,7 +138,7 @@ const onMessage = async (msg) => {
       type: bot.Message.Type.Revoke, data: {
         content: data.sysmsg.replacemsg,
         id: msgId
-      },
+      }, ...base
     });
   }
   else if (msg.type() && isNaN(msg.type())) {

@@ -9,7 +9,6 @@ const ContactModel = require('../models').contact;
 const MsgModel = require('../models').msg;
 const EmojiModel = require('../models').emoji;
 const path = require('path');
-const { isReadable } = require("stream");
 
 const parseXml = (xmlString) => {
   return new jsdom.JSDOM(xmlString);
@@ -257,14 +256,13 @@ class Wechat {
     return results;
   }
 
-  async getMessage ({ id, count = 20, index = 0, chat_time = 0 }) {
+  async getMessage ({ id, count = 20, index = 0, chat_time = 0, isReadable }) {
+    const where = {};
+    if (isReadable !== undefined) where.isReadable = isReadable == 'true';
+    if (id !== undefined) where.from = id;
+    if (chat_time) where.chat_time = { [Op.lt]: chat_time };
     const messages = await MsgModel.findAll({
-      where: {
-        from: id,
-        chat_time: {
-          [Op.lt]: chat_time || Date.now(),
-        }
-      },
+      where,
       raw: true,
       order: [['chat_time', 'DESC']],
       limit: Number(count),
@@ -328,7 +326,7 @@ class Wechat {
   static async saveMessage (msg) {
     try {
       const recvTypes = [
-        'file', 'voice', 'emoji', 'image', 'text', 'video', 'quote', 'pat'
+        'file', 'voice', 'emoji', 'image', 'text', 'video', 'quote', 'pat', 'revoke'
       ]
       if (!recvTypes.includes(msg.type?.toLowerCase()) || !msg.from.id) {
         return false;
@@ -339,16 +337,16 @@ class Wechat {
       }
       await MsgModel.create({
         msgId: msg.id,
-        from: msg.in.id,
-        fromName: msg.in.name,
-        talkerId: msg.from.id,
-        talkerName: msg.from.name,
+        from: msg.in?.id || '',
+        fromName: msg.in?.name || '',
+        talkerId: msg.from?.id || '',
+        talkerName: msg.from?.name || '',
         content: typeof msg.data == 'string' ? msg.data : JSON.stringify(msg.data),
         msg_type: msg.type,
         type: 0,
         chat_time: msg.date.getTime() / 1000,
         source: JSON.stringify(msg.source || {}),
-        isReadable: false,
+        isReadable: msg.isSelf || false,
         isRevoke: false,
       });
 
@@ -457,7 +455,8 @@ class Wechat {
     if (!isRoom && !id.endsWith('@chatroom')) {
       return this.bot.Contact.find({ id });
     } else {
-      return new (this.bot.Room)(this.bot.db.findOneByChatroomId(id));
+      const room = this.bot.db.findOneByChatroomId(id) || { chatroomId: id };
+      return new (this.bot.Room)(room);
     }
   }
 
