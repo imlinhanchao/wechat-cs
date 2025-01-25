@@ -106,6 +106,21 @@ export class Chat {
         return false
       });
   }
+
+  async addEmoji(params: any) {
+    const savePath = isDevMode ? 
+        path.resolve(__dirname, '..', '..', 'webview', 'public', 'emoji', `face_${params.md5}`) : 
+        path.resolve(__dirname, '..', 'webview', 'emoji', `face_${params.md5}`);
+    if (!fs.existsSync(savePath)) {
+      const { server } = getConfig();
+      downloadFile(`${server}/media?url=${encodeURIComponent(params.url)}`, savePath).catch(console.error);
+    }
+    return defHttp.post<any>('/wechat/addEmoji', params)
+      .catch(err => {
+        vscode.window.showInformationMessage(err.message)
+        return false
+      });
+  }
   
   async history(params: any) {
     return defHttp.get<any>('/wechat/getMessage', params)

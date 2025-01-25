@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useEventListener } from '@/hooks/useEventListener';
 import { useMessage } from '@/hooks/useMessage';
-import { ref } from 'vue';
+import { ElMessage } from 'element-plus';
+import { ref, nextTick } from 'vue';
 
 const showContextMenu = ref(false);
 const pos = ref({
@@ -10,11 +11,18 @@ const pos = ref({
 });
 
 const msg = ref<any>();
+const contextRef = ref<HTMLElement>();
 defineExpose({
   show({ x, y }, m) {
-    pos.value = { x, y };
-    showContextMenu.value = true;
     msg.value = m;
+    showContextMenu.value = true;
+    nextTick(() => {
+      const rect = contextRef.value!.getBoundingClientRect();
+      const { width, height } = rect;
+      if (x + width > window.innerWidth) x = x - width;
+      if (y + height > window.innerHeight) y = window.innerHeight - height;
+      pos.value = { x, y };
+    });
   }
 });
 
@@ -28,7 +36,7 @@ useEventListener({
   }
 });
 
-const emit = defineEmits(['revoke', 'quote']);
+const emit = defineEmits(['revoke', 'quote', 'doubleMsg', 'addEmoji']);
 const { invoke } = useMessage();
 async function revoke() {
   showContextMenu.value = false;
@@ -47,6 +55,19 @@ function quote() {
   showContextMenu.value = false;
   emit('quote', msg.value);
 }
+function doubleMsg() {
+  showContextMenu.value = false;
+  emit('doubleMsg', msg.value);
+}
+function addEmoji() {
+  const emoji = typeof msg.value.data == 'string' ? JSON.parse(msg.value.data) : msg.value.data;
+  invoke('addEmoji', emoji).then((data) => {
+    if (!data) return;
+    ElMessage.success('添加成功');
+    emit('addEmoji', emoji);
+  });
+  showContextMenu.value = false;
+}
 </script>
 
 <template>
@@ -57,9 +78,10 @@ function quote() {
     :style="{ left: pos.x + 'px', top: pos.y + 'px' }"
   >
     <ul class="w-30">
+      <li v-if="msg?.type == 'emoji'" @click="addEmoji">添加表情包</li>
       <li v-if="msg?.isSelf" @click="revoke">撤回</li>
-      <li @click="quote">引用</li>
-      <li>复读一下</li>
+      <li v-if="['text', 'image', 'emoji'].includes(msg?.type)" @click="quote">引用</li>
+      <li v-if="['text', 'emoji'].includes(msg?.type)" @click="doubleMsg">复读一下</li>
     </ul>
   </section>
 </template>

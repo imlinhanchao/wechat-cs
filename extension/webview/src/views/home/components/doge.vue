@@ -26,6 +26,12 @@ function send(emoji: any) {
   emit('send', emoji);
   visible.value = false;
 }
+
+defineExpose({
+  add(emoji) {
+    emojis.value.unshift(emoji);
+  }
+});
 </script>
 
 <template>

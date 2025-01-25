@@ -33,6 +33,27 @@ async function send(message, done) {
   done();
 }
 
+async function doubleMsg(msg) {
+  if (msg.type == 'text') {
+    await invoke('send', {
+      id: props.contact.wxid,
+      text: msg.data,
+      isRoom: props.contact.wxid.endsWith('@chatroom')
+    });
+  } else if (msg.type == 'emoji') {
+    const face = typeof msg.data == 'string' ? JSON.parse(msg.data) : msg.data;
+    await invoke('sendEmoji', {
+      ...face,
+      id: props.contact.wxid
+    });
+  }
+}
+
+const msgboxRef = ref<InstanceType<typeof MsgBox>>();
+function addEmoji(emoji) {
+  msgboxRef.value?.addEmoji(emoji);
+}
+
 const footerRef = ref();
 watch(
   () => props.contact.msgs?.length,
@@ -110,7 +131,13 @@ defineExpose({ init, refresh });
       <section ref="footerRef"></section>
       <!--消息结尾，用于滚动定位-->
       <Teleport to="body">
-        <Contextmenu ref="contextRef" @revoke="emit('revoke', $event)" @quote="quote" />
+        <Contextmenu
+          ref="contextRef"
+          @revoke="emit('revoke', $event)"
+          @quote="quote"
+          @double-msg="doubleMsg"
+          @add-emoji="addEmoji"
+        />
       </Teleport>
     </el-main>
     <el-footer class="!p-0" height="auto">
@@ -122,7 +149,7 @@ defineExpose({ init, refresh });
             icon="el-icon-refresh"
             @click="loadMsgs(contact, 0)"
           />
-          <MsgBox :nickname="contact.nickname" @send="send" :wxid="contact.wxid" />
+          <MsgBox ref="msgboxRef" :nickname="contact.nickname" @send="send" :wxid="contact.wxid" />
         </section>
         <section>
           <el-tag

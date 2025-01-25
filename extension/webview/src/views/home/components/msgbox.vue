@@ -42,6 +42,13 @@ useEventListener({
     });
   }
 });
+
+const emojiRef = ref<InstanceType<typeof Doge>>();
+defineExpose({
+  addEmoji(face) {
+    emojiRef.value?.add(face);
+  }
+});
 </script>
 <template>
   <section class="flex-1 flex flex-col">
@@ -60,7 +67,7 @@ useEventListener({
             <Icon icon="majesticons:image-plus" v-if="!imgLoading" />
           </el-button>
           <Emoji @input="message += `[${$event}]`" />
-          <Doge @send="sendEmoji" />
+          <Doge ref="emojiRef" @send="sendEmoji" />
         </section>
       </template>
     </el-input>
