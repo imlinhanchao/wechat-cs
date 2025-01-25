@@ -29,10 +29,11 @@ function pushMsg(d: IMessage) {
       });
   }
   const contactIndex = contacts.value.findIndex((c: IContact) => c.wxid === d.in.id);
-  const contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
+  let contact = contacts.value.find((c: IContact) => c.wxid === d.in.id);
   if (contactIndex > 0 && !blocks.value.includes(contact?.wxid || '')) {
     contacts.value.unshift(contacts.value.splice(contactIndex, 1)[0]);
   }
+  contact = contactList.value.find((c: IContact) => c.wxid === d.in.id);
   if (!contact) return;
   if (!contact.msgs) contact.msgs = [];
   contact.msgs.push(d);
@@ -41,7 +42,9 @@ function pushMsg(d: IMessage) {
   }
 }
 
-const { getMe: info, getConfig: config } = useConfigStore();
+const configStore = useConfigStore();
+const { getConfig: config } = configStore;
+const info = computed(() => configStore.getMe);
 const contacts = ref<IContact[]>([]);
 const blocks = ref<string[]>(config.blocks || []);
 addListener('blocks', (data) => {
@@ -63,7 +66,7 @@ function init() {
 
 const currentId = ref<string>();
 const currentContact = computed(() => {
-  return contacts.value.find((c: IContact) => c.id === currentId.value);
+  return contactList.value.find((c: IContact) => c.id === currentId.value);
 });
 function switchContact(id: string) {
   currentId.value = id;
@@ -91,6 +94,21 @@ function revokeMsg(id) {
     }
   }
 }
+
+const search = ref('');
+const searchResult = ref<IContact[]>([]);
+const isSearching = ref(false);
+function searchContact() {
+  if (!search.value) return;
+  invoke('contacts', { searchValue: search.value }).then((data) => {
+    searchResult.value = data;
+    isSearching.value = true;
+  });
+}
+
+const contactList = computed(() => {
+  return isSearching.value ? searchResult.value : contacts.value;
+});
 </script>
 
 <template>
@@ -98,13 +116,25 @@ function revokeMsg(id) {
     <el-aside class="border-r border-gray-800 p-1" width="200px">
       <el-container class="box-card">
         <el-header class="bg-gray-800 bg-opacity-50 !p-1" height="auto">
-          <div v-if="info" class="flex space-x-3 items-center">
-            <el-avatar :size="16" :src="info.smallHeadImgUrl" />
-            <span class="font-bold">{{ info.nickName }}</span>
+          <section class="flex justify-between items-center">
+            <div v-if="info" class="flex space-x-1 items-center flex-nowarp whitespace-nowrap">
+              <el-avatar :size="16" :src="info.smallHeadImgUrl" />
+              <span class="font-bold">{{ info.nickName }}</span>
+            </div>
+            <el-button link icon="el-icon-search" @click="isSearching = !isSearching" />
+          </section>
+          <div v-if="isSearching">
+            <el-input
+              size="small"
+              v-model="search"
+              placeholder="搜索"
+              clearable
+              @keydown.enter="searchContact"
+            />
           </div>
         </el-header>
         <el-main>
-          <template v-for="c in contacts" :key="c.id">
+          <template v-for="c in contactList" :key="c.id">
             <section
               class="flex space-x-3 items-center py-1 px-1 border-b border-gray-800 cursor-pointer truncate group"
               @click="switchContact(c.id)"

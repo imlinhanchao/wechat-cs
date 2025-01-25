@@ -61,6 +61,7 @@ export class PanelProvider extends WebView implements vscode.WebviewViewProvider
     this.chat.history({
       isReadable: false,
     }).then((data: any) => {
+      if (!data) return;
       const blocks = getConfig().blocks;
       this.unreaded = data.filter((d: any) => !blocks.includes(d.in.id) && !d.in.id.startsWith('gh_')).length;
       this._view!.badge = {

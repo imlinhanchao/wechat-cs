@@ -66,8 +66,8 @@ export class Chat {
       });
   }
   
-  async contacts() {
-    return defHttp.get<any>('/wechat/near')
+  async contacts(params: any) {
+    return defHttp.get<any>('/wechat/near', params)
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false
