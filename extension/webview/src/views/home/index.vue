@@ -130,6 +130,7 @@ const contactList = computed(() => {
               placeholder="搜索"
               clearable
               @keydown.enter="searchContact"
+              class="!p-0"
             />
           </div>
         </el-header>

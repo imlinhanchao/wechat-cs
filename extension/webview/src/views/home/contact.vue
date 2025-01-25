@@ -144,7 +144,7 @@ defineExpose({ init, refresh });
       <section class="flex flex-col">
         <section class="flex items-center w-full">
           <el-button
-            class="!text-[#1fd18b] !-mr-3 relative z-10"
+            class="!text-[#1fd18b] relative z-10"
             link
             icon="el-icon-refresh"
             @click="loadMsgs(contact, 0)"
