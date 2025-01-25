@@ -20,7 +20,8 @@ export function useMessage() {
       if (!messageHandler[message.command]) return;
       messageHandler[message.command].forEach((handler) => handler(message.data));
       console.info('onMessage', message);
-    }
+    },
+    wait: 0
   });
   /**
    * @description 添加 command 的监听
