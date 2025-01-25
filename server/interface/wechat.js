@@ -220,13 +220,15 @@ class Wechat {
     }
   }
 
-  async getNearContact ({ count = 20, index = 0 }) {
+  async getNearContact ({ count = 20, index = 0, searchValue = '' }) {
     const query = `
       SELECT id, wxid, nickname, avatar, remark, last_chat_time, create_time, update_time
       FROM wx.wx_contact
+      WHERE nickname LIKE :nickName OR remark LIKE :remark
       UNION
       SELECT id, wxid, nickname, avatar, remark, last_chat_time, create_time, update_time
       FROM wx.wx_chatroom
+      WHERE nickname LIKE :nickName OR remark LIKE :remark
       ORDER BY last_chat_time DESC
       LIMIT :limit OFFSET :offset
     `;
@@ -236,6 +238,8 @@ class Wechat {
       replacements: {
         limit: count,
         offset: index,
+        nickName: `%${searchValue}%`,
+        remark: `%${searchValue}%`,
       }
     });
 
