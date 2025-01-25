@@ -3,12 +3,9 @@ import Icon from '@/components/Icon';
 import { useEventListener } from '@/hooks/useEventListener';
 import { getEmojiList } from '@/utils/emoji';
 import { ref } from 'vue';
-import { useConfigStore } from '@/store/modules/config';
+
 const emit = defineEmits(['send']);
-
 const visible = ref(false);
-
-const { getConfig: config } = useConfigStore();
 
 useEventListener({
   el: document.body,
@@ -46,11 +43,17 @@ function send(emoji: any) {
           class="flex items-center justify-center w-12 h-12 rounded bg-[#1f1f1f] cursor-pointer p-[3px]"
         >
           <el-image
-            :src="`${config.server}/media?url=${encodeURIComponent(emoji.url)}`"
+            :src="`./emoji/face_${emoji.md5}`"
             class="w-full h-full no-preview"
             loading="lazy"
             fit="cover"
-          />
+          >
+            <template #error>
+              <section class="flex items-center justify-center w-full h-full">
+                <Icon icon="line-md:loading-loop" />
+              </section>
+            </template>
+          </el-image>
         </div>
       </section>
     </div>

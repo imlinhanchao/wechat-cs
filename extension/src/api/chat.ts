@@ -1,10 +1,11 @@
 import { defHttp } from "../lib/request";
 import vscode from 'vscode';
 import { ChatWs } from "./ws";
-import { getConfig, getPasteImage, getTmpFolder, openFile } from "../lib/utils";
+import { downloadFile, getConfig, getPasteImage, getTmpFolder, isDevMode, openFile } from "../lib/utils";
 import FormData from "form-data";
 import * as fs from 'fs';
 import * as path from 'path';
+import { count } from "console";
 
 export class Chat {
   token: string = '';
@@ -17,6 +18,7 @@ export class Chat {
     defHttp.token = this.token;
     if (this.isLogin) {
       this.infoPromise = this.info();
+      this.getEmojis({ count: 0 });
     }
   }
 
@@ -80,8 +82,25 @@ export class Chat {
       });
   }
 
+  async emojiCache(emojis: any[]) {
+    const { server } = getConfig();
+    for (let emoji of emojis) {
+      const savePath = isDevMode ? 
+        path.resolve(__dirname, '..', '..', 'webview', 'public', 'emoji', `face_${emoji.md5}`) : 
+        path.resolve(__dirname, '..', 'webview', 'emoji', `face_${emoji.md5}`);
+      if (!fs.existsSync(savePath)) {
+        await downloadFile(`${server}/media?url=${encodeURIComponent(emoji.url)}`, savePath);
+      }
+    }
+    return ;
+  }
+
   async getEmojis(params: any) {
     return defHttp.get<any>('/wechat/getEmojis', params)
+      .then((res) => {
+        this.emojiCache(res);
+        return res;
+      })
       .catch(err => {
         vscode.window.showInformationMessage(err.message)
         return false

@@ -1,6 +1,7 @@
 import vscode from 'vscode';
 import path from 'path';
 import fs from 'fs';
+import { isDevMode } from './utils';
 
 export interface IWebviewOptions {
   name: string;
@@ -55,17 +56,15 @@ export class WebView {
   }
 
   getHtml(options: IWebviewOptions) {
-    // 通过 dev 文件夹是否存在来判断现在是打包模式还是开发模式
-    let exists = fs.existsSync(path.resolve(__dirname, '..', '..', 'dev'));
-		
+
     // 获取 index.html 文件路径
-    let mainHtml = exists ? 
+    let mainHtml = isDevMode ? 
 			path.resolve(__dirname, '..', '..', 'dev', 'index.html') : 
 			path.resolve(__dirname, '..', 'webview', 'index.html');
 
     const root = this.context.extensionPath;
     // 获取 base 路径的 VSCode uri，这样才能载入本地资源
-		let baseUrl = vscode.Uri.file(exists ?
+		let baseUrl = vscode.Uri.file(isDevMode ?
 			path.join(root, 'dev', '/') :
 			path.join(root, 'out', 'webview', '/')
     );
