@@ -10,12 +10,13 @@ export class Chat {
   token: string = '';
   context: vscode.ExtensionContext
   chatws?: ChatWs;
+  infoPromise?: Promise<any>;
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
     this.token = context.globalState.get('token') || '';
     defHttp.token = this.token;
     if (this.isLogin) {
-      this.info();
+      this.infoPromise = this.info();
     }
   }
 
@@ -101,7 +102,8 @@ export class Chat {
             self: !item.talkerId,
             date: item.chat_time,
             age: 0,
-            isReaded: true,
+            isReaded: item.isReadable,
+            isRevoked: item.isRevoked,
           }
         });
       })

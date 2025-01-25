@@ -8,7 +8,9 @@ import { useConfigStore } from '@/store/modules/config';
 
 const contactRef = ref<InstanceType<typeof ContactView>>();
 const { addListener, postMsg, invoke } = useMessage();
-addListener('connect', (d: IMessage) => {
+addListener('connect', pushMsg);
+
+function pushMsg(d: IMessage) {
   if (!d.type || d.in.id.startsWith('gh_')) return;
   if (d.type.toLocaleLowerCase() == 'revoke') {
     revokeMsg(d.data.id);
@@ -37,7 +39,7 @@ addListener('connect', (d: IMessage) => {
   if (currentId.value === contact.wxid) {
     contactRef.value?.refresh(contact);
   }
-});
+}
 
 const { getMe: info, getConfig: config } = useConfigStore();
 const contacts = ref<IContact[]>([]);
@@ -51,6 +53,11 @@ function init() {
   invoke('contacts').then((data) => {
     if (!data) router.replace('/login');
     contacts.value = data || [];
+  });
+  invoke('history', {
+    isReadable: false
+  }).then((data) => {
+    data.forEach(pushMsg);
   });
 }
 
