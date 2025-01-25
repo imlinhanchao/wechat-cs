@@ -274,6 +274,25 @@ class Wechat {
     }
   }
 
+  async addEmoji ({ md5, size, url }) {
+    if (await EmojiModel.findOne({ where: { md5 } })) {
+      return {
+        code: 400,
+        data: false,
+        message: '表情已存在',
+      }
+    }
+    const emoji = await EmojiModel.create({
+      md5,
+      size,
+      url,
+    });
+    return {
+      code: 200,
+      data: emoji,
+    }
+  }
+
   async getEmojis ({ count = 20, index = 0 }) {
     const emojis = await EmojiModel.findAll({
       raw: true,
