@@ -19,9 +19,13 @@ async function send(message, done) {
   if (!message) return;
   if (quoteMsg.value) {
     await invoke('quote', {
+      id: props.contact.wxid,
       wxid: props.contact.wxid,
       title: message,
-      msgid: quoteMsg.value.id
+      msgid: quoteMsg.value.id,
+      isRoom: props.contact.wxid.endsWith('@chatroom'),
+      displayname: quoteMsg.value.from.alias || quoteMsg.value.from.name,
+      content: quoteMsg.value.data
     });
   } else {
     await invoke('send', {
