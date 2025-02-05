@@ -44,19 +44,18 @@ class Wechat {
     });
   }
 
-  async quote ({ title, msgid, wxid }) {
+  async quote ({ title, msgid, wxid, content, displayname, ...params }) {
     try {
-      const message = new this.bot.Message({
-        Data: {
-          FromUserName: { string: '' }, ToUserName: { string: '' }, Content: { string: '' },
-          NewMsgId: msgid,
-        },
-      })
-      message.fromId = wxid;
+      const contact = await this._queryTarget(params);
+      const quoteMsg = { title, msgid, wxid };
+      const msg = await this.bot.Message.quote(quoteMsg);
       return {
         code: 200,
         message: '发送成功',
-        data: await message.quote(title),
+        data: await this._afterSend(contact, msg, {
+          content: title,
+          refermsg: { displayname, content }
+        }, this.bot.Message.Type.Quote),
       }
     } catch (error) {
       return {
