@@ -27,6 +27,7 @@ async function send(message, done) {
       displayname: quoteMsg.value.from.alias || quoteMsg.value.from.name,
       content: quoteMsg.value.data
     });
+    quoteMsg.value = null;
   } else {
     await invoke('send', {
       id: props.contact.wxid,
