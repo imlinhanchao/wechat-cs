@@ -105,9 +105,16 @@ class Wechat {
     }
   }
 
-  async send ({ text, ...params }) {
+  async send ({ text, ats, ...params }) {
     const contact = await this._queryTarget(params);
-    const msg = await contact.say(text);
+    if (ats?.length > 0 && contact.chatroomId) {
+      const memberList = await contact.memberAll()
+      ats = ats.map(at => memberList.find(m => m._wxid === at));
+    } else ats = undefined;
+    const msg = await contact.say(text, ats);
+    if (ats) {
+      text = ats.join(' ') + ' ' + text;
+    }
     Wechat.msgList.push(msg);
 
     return {
@@ -362,7 +369,7 @@ class Wechat {
         from: msg.in?.id || '',
         fromName: msg.in?.name || '',
         talkerId: msg.from?.id || '',
-        talkerName: msg.from?.name || '',
+        talkerName: msg.from?.alias || msg.from?.name || '',
         content: typeof msg.data == 'string' ? msg.data : JSON.stringify(msg.data),
         msg_type: msg.type,
         type: 0,
