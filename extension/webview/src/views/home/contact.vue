@@ -16,7 +16,7 @@ const { getMe: info } = useConfigStore();
 const me = computed(() => info.wxid);
 
 async function send(message, done) {
-  if (!message) return;
+  if (!message || (atUser.value.length && !quoteMsg.value)) return;
   if (quoteMsg.value) {
     await invoke('quote', {
       id: props.contact.wxid,
@@ -32,8 +32,10 @@ async function send(message, done) {
     await invoke('send', {
       id: props.contact.wxid,
       text: message,
-      isRoom: props.contact.wxid.endsWith('@chatroom')
+      isRoom: props.contact.wxid.endsWith('@chatroom'),
+      ats: atUser.value.map((u) => u.id)
     });
+    atUser.value = [];
   }
   done();
 }
@@ -113,6 +115,11 @@ function quote(msg: IMessage) {
   quoteMsg.value = msg;
 }
 
+const atUser = ref<IWechatContact[]>([]);
+function atPush(user: IWechatContact) {
+  atUser.value.push(user);
+}
+
 defineExpose({ init, refresh });
 </script>
 <template>
@@ -142,6 +149,7 @@ defineExpose({ init, refresh });
           @quote="quote"
           @double-msg="doubleMsg"
           @add-emoji="addEmoji"
+          @at="atPush"
         />
       </Teleport>
     </el-main>
@@ -172,6 +180,22 @@ defineExpose({ init, refresh });
             </span>
             <Msg :msg="quoteMsg" />
           </el-tag>
+          <section v-else-if="atUser.length">
+            <el-tag
+              v-for="(u, i) in atUser"
+              :key="u.id"
+              type="info"
+              closable
+              @close="atUser.splice(i, 1)"
+              :hit="true"
+              color="#1f1f1f"
+              class="!border-[#3c3c3c] ml-1"
+            >
+              <span class="font-bold" v-if="contact.wxid.endsWith('@chatroom')">
+                @{{ u.alias || u.name }}
+              </span>
+            </el-tag>
+          </section>
         </section>
       </section>
     </el-footer>

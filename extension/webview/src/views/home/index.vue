@@ -51,13 +51,13 @@ addListener('blocks', (data) => {
   blocks.value = data;
 });
 
-function init() {
+async function init() {
   postMsg('connect');
-  invoke('contacts').then((data) => {
+  await invoke('contacts').then((data) => {
     if (!data) router.replace('/login');
     contacts.value = data || [];
   });
-  invoke('history', {
+  await invoke('history', {
     isReadable: false
   }).then((data) => {
     data.forEach(pushMsg);
@@ -118,7 +118,7 @@ const contactList = computed(() => {
         <el-header class="bg-gray-800 bg-opacity-50 !p-1" height="auto">
           <section class="flex justify-between items-center">
             <div v-if="info" class="flex space-x-1 items-center flex-nowarp whitespace-nowrap">
-              <el-avatar :size="16" :src="info.smallHeadImgUrl" />
+              <el-avatar :size="16" :src="info.smallHeadImgUrl" @click="init" />
               <span class="font-bold">{{ info.nickName }}</span>
             </div>
             <el-button link icon="el-icon-search" @click="isSearching = !isSearching" />

@@ -2,7 +2,7 @@
 import { useEventListener } from '@/hooks/useEventListener';
 import { useMessage } from '@/hooks/useMessage';
 import { ElMessage } from 'element-plus';
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, computed } from 'vue';
 
 const showContextMenu = ref(false);
 const pos = ref({
@@ -36,7 +36,7 @@ useEventListener({
   }
 });
 
-const emit = defineEmits(['revoke', 'quote', 'doubleMsg', 'addEmoji']);
+const emit = defineEmits(['revoke', 'quote', 'doubleMsg', 'addEmoji', 'at']);
 const { invoke } = useMessage();
 async function revoke() {
   showContextMenu.value = false;
@@ -68,6 +68,12 @@ function addEmoji() {
   });
   showContextMenu.value = false;
 }
+function atMsg() {
+  showContextMenu.value = false;
+  emit('at', msg.value.from);
+}
+
+const isRoom = computed(() => msg.value?.in?.id.endsWith('@chatroom'));
 </script>
 
 <template>
@@ -80,6 +86,7 @@ function addEmoji() {
     <ul class="w-30">
       <li v-if="msg?.type == 'emoji'" @click="addEmoji">添加表情包</li>
       <li v-if="msg?.isSelf" @click="revoke">撤回</li>
+      <li v-if="!msg?.isSelf && isRoom" @click="atMsg">@{{ msg.from.alias || msg.from.name }}</li>
       <li v-if="['text', 'image', 'emoji'].includes(msg?.type)" @click="quote">引用</li>
       <li v-if="['text', 'emoji'].includes(msg?.type)" @click="doubleMsg">复读一下</li>
     </ul>

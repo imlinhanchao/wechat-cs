@@ -47,6 +47,9 @@ const emojiRef = ref<InstanceType<typeof Doge>>();
 defineExpose({
   addEmoji(face) {
     emojiRef.value?.add(face);
+  },
+  pushMsg(text) {
+    message.value += text;
   }
 });
 </script>

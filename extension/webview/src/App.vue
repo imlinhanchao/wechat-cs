@@ -29,7 +29,7 @@ const init = async () => {
     await loginInit();
   }
   console.info('route:', route);
-  isInited.value = true;
+  nextTick(() => (isInited.value = true));
 };
 
 init();

@@ -4,13 +4,17 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '@/components/Icon';
 import { ElInput } from 'element-plus';
+import { useConfigStore } from '@/store/modules/config';
 
 const router = useRouter();
 const code = ref('');
+const { loginInit } = useConfigStore();
 function login() {
   const { invoke } = useMessage();
-  invoke('login', code.value).then((data) => {
-    if (data) router.replace('/');
+  invoke('login', code.value).then(async (data) => {
+    if (!data) return;
+    await loginInit();
+    router.replace('/');
   });
 }
 
