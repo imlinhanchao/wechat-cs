@@ -328,7 +328,7 @@ function getPasteImage (imagePath: string): Promise<string[]> {
           powershell.stdout.on('data', (data) => {
               data.toString().split('\n').forEach((d: string) => output += (d.indexOf('Active code page:') < 0 ? d + '\n' : ''));
               clearTimeout(timer);
-              timer = setTimeout(() => powershell.kill(), 2000);
+              timer = setTimeout(() => powershell.kill(), 10000);
           });
           powershell.on('close', (code) => {
               resolve(output.trim().split('\n').map(i => i.trim()));
