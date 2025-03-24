@@ -2,7 +2,6 @@ import querystring from 'querystring';
 import { getConfig } from './utils';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import fetch from 'node-fetch';
 import FormData from "form-data";
 
 export interface RequestOptions {
@@ -26,7 +25,8 @@ export class defHttp {
     if (config.proxy) agent = url.startsWith('http://') ? new HttpProxyAgent(config.proxy) : new HttpsProxyAgent(config.proxy);
     const body = options.method != 'GET' ? (options.data instanceof FormData ? options.data : JSON.stringify(options.data)) : undefined;
     const headers: any = typeof body == 'string' ? { 'Content-Type': 'application/json' } : {};
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      const fetch = await import('node-fetch').then(r => r.default);
       fetch(url, {
         method: options.method,
         headers: {

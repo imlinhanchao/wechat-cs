@@ -7,14 +7,14 @@ import * as crypto from 'crypto';
 import * as pkg from '../../package.json';
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
-import fetch from 'node-fetch';
 
 const downloadFile = (async (url: string, path: string) => {
+  const fetch = await import('node-fetch').then(r => r.default);
   const res = await fetch(url);
   const fileStream = fs.createWriteStream(path);
   await new Promise((resolve, reject) => {
-      res.body.pipe(fileStream);
-      res.body.on("error", reject);
+      res.body?.pipe(fileStream);
+      res.body?.on("error", reject);
       fileStream.on("finish", resolve);
     });
 });

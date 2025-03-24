@@ -2,7 +2,7 @@
   "name": "wechaty",
   "displayName": "Wechaty",
   "description": "Wechat for VSCode",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "engines": {
     "vscode": "^1.87.0"
   },
@@ -18,7 +18,9 @@
   },
   "publisher": "hancel",
   "license": "MIT",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "icon": "assets/logo.png",
   "main": "./out/extension.js",
   "contributes": {
@@ -95,7 +97,7 @@
     "form-data": "^4.0.1",
     "http-proxy-agent": "^7.0.2",
     "https-proxy-agent": "^7.0.6",
-    "node-fetch": "<3.0.0",
+    "node-fetch": "^3.3.2",
     "querystring": "^0.2.1",
     "reconnecting-websocket": "^4.4.0",
     "ws": "^8.18.0"
